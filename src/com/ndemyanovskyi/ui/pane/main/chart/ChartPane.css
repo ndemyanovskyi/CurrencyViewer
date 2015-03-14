@@ -1,0 +1,48 @@
+.date-picker {
+    -fx-shape: "M 0 0 V 20 H 40 V 0 z";
+}
+
+.date-picker > .text-field {
+    -fx-background-radius: 0;
+}
+
+.date-picker:focused {
+    -fx-background-color: gray;
+}
+
+.date-picker > .arrow-button {
+    -fx-background-radius:0;
+    -fx-background-color: rgb(240, 240, 240);
+}
+
+.date-picker > .arrow-button:pressed {
+    -fx-background-color: lightgray;
+}
+
+.date-picker > .text-field:focused {
+    -fx-background-color: white;
+}
+
+.date-picker-popup > .month-year-pane {
+    -fx-background-color: rgb(240, 240, 240);
+}
+
+.date-picker-popup > * > .day-name-cell {
+    -fx-background-color: rgb(240, 240, 240);
+}
+
+.date-picker-popup > * > .week-number-cell {
+    -fx-text-fill: gray;
+}
+
+.date-picker-popup > * > .week-number-cell {
+    -fx-text-fill: gray;
+}
+
+.button {
+    -fx-background-color: transparent;
+}
+
+.button:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+}

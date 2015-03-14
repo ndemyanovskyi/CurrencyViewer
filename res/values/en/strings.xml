@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<strings>
+    <string name="language_name">English</string>
+	
+	<!-- Bank names -->
+    <string name="bank_NBU">NBU</string>
+    <string name="bank_PRIVAT_BANK">PrivatBank</string>
+    <string name="bank_OSCHAD_BANK">Oschadbank</string>
+    <string name="bank_AVANT_BANK">Avant-Bank</string>
+    <string name="bank_BANK_KIEVSKA_RUS">Bank «Kyevskaya Rus»</string>
+    <string name="bank_NADRA_BANK">Nadra-Bank</string>
+    <string name="bank_BANK_PIVDENNYI">BANK «Pivdennyi»</string>
+    <string name="bank_BANK_SOYUZ">Bank «Soyuz»</string>
+    <string name="bank_BANK_HRESCHATYK">Bank «Hreschatyk»</string>
+    <string name="bank_BTA_BANK">BTA Bank</string>
+    <string name="bank_VTB_BANK">VTB Bank</string>
+    <string name="bank_DELTA_BANK">Delta-Bank</string>
+    <string name="bank_DIAMANT_BANK">Diamondbank</string>
+    <string name="bank_ZLATO_BANK">Zlatobank</string>
+    <string name="bank_IMEX_BANK">Imexbank</string>
+    <string name="bank_INDUSTRIAL_BANK">Industrialbank</string>
+    <string name="bank_CREDIT_AGRICOLE_BANK">«Credit Agricole» Bank</string>
+    <string name="bank_KREDO_BANK">Kredobank</string>
+    <string name="bank_PIREUS_BANK">Pireus Bank</string>
+    <string name="bank_PRAVEX_BANK">Pravex-Bank</string>
+    <string name="bank_PROMINVEST_BANK">Prominvestbank</string>
+    <string name="bank_PUMB">PUMB</string>
+    <string name="bank_RAIFFEISEN_BANK_AVAL">Raiffeisen Bank Aval</string>
+    <string name="bank_RODOVID_BANK">Rodovid Bank</string>
+    <string name="bank_SBER_BANK">Sberbank</string>
+    <string name="bank_UKRGAZ_BANK">Ukrgazbank</string>
+    <string name="bank_UKRIN_BANK">Ukrinbank</string>
+    <string name="bank_UKRSYB_BANK">UkrSubbank</string>
+    <string name="bank_UKREXIM_BANK">UkrEximbank</string>
+    <string name="bank_FIDOBANK">Fidobank</string>
+    <string name="bank_FINANCE_AND_CREDIT">Finance and Credit</string>
+	
+	<!-- Currency names -->
+    <string name="currency_AUD">Australian dollar</string>
+    <string name="currency_AZN">Azerbaijanian Manat</string>
+    <string name="currency_GBP">Pound Sterling</string>
+    <string name="currency_BYR">Belarusian ruble</string>
+    <string name="currency_USD">American Dollar</string>
+    <string name="currency_DKK">Danish Krone</string>
+    <string name="currency_EUR">Euro</string>
+    <string name="currency_ISK">Iceland Krona</string>
+    <string name="currency_KZT">Kazakhstani Tenge</string>
+    <string name="currency_CAD">Canadian Dollar</string>
+    <string name="currency_LTL">Lithuanian Litas</string>
+    <string name="currency_MDL">Moldovan leu</string>
+    <string name="currency_NOK">Norwegian Krone</string>
+    <string name="currency_PLN">Polish Zloty</string>
+    <string name="currency_RUB">Russian Ruble</string>
+    <string name="currency_SGD">Singapore Dollar</string>
+    <string name="currency_XDR">Special Drawing Rights</string>
+    <string name="currency_TRY">Turkish Lira</string>
+    <string name="currency_TMT">Turkmenistan New Manat</string>
+    <string name="currency_HUF">Hungarian Forint</string>
+    <string name="currency_UZS">Uzbekistani Som</string>
+    <string name="currency_CZK">Czech Koruna</string>
+    <string name="currency_SEK">Swedish Krona</string>
+    <string name="currency_CHF">Swiss Franc</string>
+    <string name="currency_CNY">Chinese Renminbi</string>
+    <string name="currency_JPY">Japanese Yen</string>
+    <string name="currency_UAH">Ukrainian Hryvnia</string>
+	
+	<!-- Months -->
+    <string name="january">January</string>
+    <string name="february">February</string>
+    <string name="march">March</string>
+    <string name="april">April</string>
+    <string name="may">May</string>
+    <string name="june">June</string>
+    <string name="july">July</string>
+    <string name="august">August</string>
+    <string name="september">September</string>
+    <string name="october">October</string>
+    <string name="november">November</string>
+    <string name="december">December</string>
+	
+	<!-- Other -->
+    <string name="buy">BUY</string>
+    <string name="sale">SALE</string>
+    <string name="rate">RATE</string>
+    <string name="from">From</string>
+    <string name="continue">Continue</string>
+    <string name="close_application">Close application</string>
+    <string name="to">To</string>
+    <string name="error_db_alredy_loaded">Database alredy loaded.</string>
+    <string name="warning_date_greater_then_upper_date">Date can`t be greater then upper date</string>
+    <string name="warning_date_less_then_lower_date">Date can`t be less then lower date</string>
+    <string name="warning_difference_between_from_and_to_days_less_then_10">Difference between the from and to days can not be less than 10</string>
+</strings>

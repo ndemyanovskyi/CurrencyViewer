@@ -1,0 +1,18 @@
+.close-button {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+    -fx-graphic: url("./close.png");
+    -fx-background-radius: 100;
+}
+
+.close-button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.15);
+}
+
+.close-button:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.2);
+}
+
+.background-box {
+    -fx-border-width: 1;
+    -fx-border-radius: 100;
+}

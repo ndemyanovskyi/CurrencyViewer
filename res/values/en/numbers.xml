@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<numbers>
+    <integer name="max_series_count">5</integer>
+    <integer name="min_series_date_difference">10</integer>
+</numbers>

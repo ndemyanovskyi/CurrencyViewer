@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<strings>
+    <string name="language_name">Українська</string>
+    <string name="default_language_name">Ukrainian</string>
+	
+	<!-- Bank names -->
+    <string name="bank_NBU">НБУ</string>
+    <string name="bank_BANK_KIEVSKA_RUS">Банк «Киівська Русь»</string>
+    <string name="bank_BANK_PIVDENNYI">Банк «Південний»</string>
+    <string name="bank_DIAMANT_BANK">Діамантбанк</string>
+    <string name="bank_IMEX_BANK">Імексбанк</string>
+    <string name="bank_INDUSTRIAL_BANK">Індустріалбанк</string>
+    <string name="bank_CREDIT_AGRICOLE_BANK">«Кредит Агріколь» Банк</string>
+    <string name="bank_PIREUS_BANK">Піреус Банк</string>
+    <string name="bank_PROMINVEST_BANK">Промінвестбанк</string>
+    <string name="bank_RODOVID_BANK">Родовід Банк</string>
+    <string name="bank_UKRIN_BANK">Укрінбанк</string>
+    <string name="bank_UKREXIM_BANK">Укрексімбанк</string>
+    <string name="bank_FIDOBANK">Фідобанк</string>
+    <string name="bank_FINANCE_AND_CREDIT">Фінанси та Кредит</string>
+    <string name="bank_SBER_BANK">Сбербанк Росії</string>
+    <string name="bank_ZLATO_BANK">Златобанк</string>
+	
+	<!-- Months -->
+    <string name="january">Січень</string>
+    <string name="february">Лютий</string>
+    <string name="march">Березень</string>
+    <string name="april">Квітень</string>
+    <string name="may">Травень</string>
+    <string name="june">Червень</string>
+    <string name="july">Липень</string>
+    <string name="august">Серпень</string>
+    <string name="september">Вересень</string>
+    <string name="october">Жовтень</string>
+    <string name="november">Листопад</string>
+    <string name="december">Грудень</string>
+	
+	<!-- Other -->
+    <string name="buy">КУПІВЛЯ</string>
+    <string name="sale">ПРОДАЖ</string>
+    <string name="from">Від</string>
+    <string name="continue">Продовжити</string>
+    <string name="close_application">Закрити програму</string>
+    <string name="error_db_alredy_loaded">Сталась помилка. База даних уже відкрита в іншій програмі.</string>
+</strings>

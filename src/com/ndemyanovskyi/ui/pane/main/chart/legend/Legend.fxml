@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.paint.*?>
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import com.qguest.ui.pane.main.chart.legend.*?>
+
+<fx:root fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="LEFT_TO_RIGHT" onMouseEntered="#onMouseEntered" onMouseExited="#onMouseExited" spacing="8.0" styleClass="background-box" stylesheets="@Legend.css" type="HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <VBox fx:id="titleBox" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="2.0">
+            <children>
+                <Label fx:id="labelBank" style="-fx-text-fill: gray;" text="${controller.intent.bank.displayName}" />
+                <Line fx:id="colorLine" endX="${titleBox.width - 2}" startX="0.0" stroke="${controller.intent.color}" strokeWidth="2.0" />
+                <HBox fx:id="bottomBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="5.0">
+                    <children>
+                        <Label fx:id="typeLabel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-text-fill: gray;" text="${controller.intent.field.displayName}">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <Label text="-">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                        <Label fx:id="currencyLabel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-text-fill: gray;" text="${controller.intent.currency}">
+                            <font>
+                                <Font size="12.0" />
+                            </font>
+                        </Label>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+        <StackPane fx:id="progressClosePane" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0">
+            <children>
+                <ProgressIndicator fx:id="progressIndicator" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" progress="0.0">
+                    <StackPane.margin>
+                        <Insets />
+                    </StackPane.margin>
+                    <padding>
+                        <Insets bottom="-22.0" />
+                    </padding>
+                </ProgressIndicator>
+                <Button fx:id="closeButton" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#onButtonCloseAction" opacity="0.0" prefHeight="20.0" prefWidth="20.0" styleClass="close-button" />
+            </children>
+        </StackPane>
+    </children>
+    <padding>
+        <Insets bottom="5.0" left="15.0" right="15.0" top="5.0" />
+    </padding>
+</fx:root>

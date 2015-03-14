@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<strings>
+    <string name="language_name">Русский</string>
+	
+	<!-- Bank names -->
+    <string name="bank_AVANT_BANK">Авант-Банк</string>
+    <string name="bank_BANK_HRESCHATYK">Банк Хрещатик</string>
+    <string name="bank_BANK_KIEVSKA_RUS">Банк Киевская Русь</string>
+    <string name="bank_BANK_PIVDENNYI">Банк Пивденный</string>
+    <string name="bank_BANK_SOYUZ">Банк Союз</string>
+    <string name="bank_BTA_BANK">БТА Банк</string>
+    <string name="bank_CREDIT_AGRICOLE_BANK">Креди Агриколь Банк</string>
+    <string name="bank_DELTA_BANK">Дельта Банк</string>
+    <string name="bank_DIAMANT_BANK">Диамантбанк</string>
+    <string name="bank_FIDOBANK">Фидобанк</string>
+    <string name="bank_FINANCE_AND_CREDIT">Финансы и Кредит</string>tput.
+    <string name="bank_IMEX_BANK">Имэксбанк</string>
+    <string name="bank_INDUSTRIAL_BANK">Индустриалбанк</string>
+    <string name="bank_KREDO_BANK">Кредобанк</string>
+    <string name="bank_NADRA_BANK">Банк Надра</string>
+    <string name="bank_NBU">НБУ</string>
+    <string name="bank_OSCHAD_BANK">Ощадбанк</string>
+    <string name="bank_PIREUS_BANK">Пиреус Банк</string>
+    <string name="bank_PRAVEX_BANK">Правэкс-Банк</string>
+    <string name="bank_PRIVAT_BANK">ПриватБанк</string>
+    <string name="bank_PROMINVEST_BANK">Проминвестбанк</string>
+    <string name="bank_PUMB">ПУМБ</string>
+    <string name="bank_RAIFFEISEN_BANK_AVAL">Райффайзен Банк Аваль</string>
+    <string name="bank_RODOVID_BANK">Родовид Банк</string>
+    <string name="bank_SBER_BANK">Сбербанк России</string>
+    <string name="bank_UKREXIM_BANK">Укрэксимбанк</string>
+    <string name="bank_UKRGAZ_BANK">Укргазбанк</string>
+    <string name="bank_UKRIN_BANK">Укринбанк</string>
+    <string name="bank_UKRSYB_BANK">УкрСиббанк</string>
+    <string name="bank_VTB_BANK">ВТБ Банк</string>
+    <string name="bank_ZLATO_BANK">Златобанк</string>
+	
+	<!-- Months -->
+    <string name="january">Январь</string>
+    <string name="february">Февраль</string>
+    <string name="march">Март</string>
+    <string name="april">Апрель</string>
+    <string name="may">Май</string>
+    <string name="june">Июнь</string>
+    <string name="july">Июль</string>
+    <string name="august">Август</string>
+    <string name="september">Сентябрь</string>
+    <string name="october">Октябрь</string>
+    <string name="november">Ноябрь</string>
+    <string name="december">Декабрь</string>
+	
+	<!-- Other -->
+    <string name="buy">ПОКУПКА</string>
+    <string name="sale">ПРОДАЖА</string>
+    <string name="rate">КУРС</string>
+    <string name="from">От</string>
+    <string name="to">До</string>
+    <string name="continue">Продолжить</string>
+    <string name="close_application">Закрыть программу</string>
+    <string name="error_db_alredy_loaded">Случилась ошибка. База данных уже открыта в другой программе.</string>
+</strings>

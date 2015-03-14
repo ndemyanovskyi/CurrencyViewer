@@ -1,0 +1,21 @@
+.exit-button, .minimize-button {
+  -fx-background-color: transparent;
+  -fx-background-radius: 0;
+}
+
+.exit-button:pressed, .minimize-button:pressed {
+  -fx-background-color: rgba(0, 0, 0, 0.1);
+}
+
+.exit-button:hover, .minimize-button:hover {
+  -fx-opacity: 0.5;
+}
+
+.exit-button {
+  -fx-graphic: url('./exit.png');
+}
+
+.minimize-button {
+  -fx-graphic: url('./minimize.png');
+}
+
