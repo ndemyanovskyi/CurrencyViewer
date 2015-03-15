@@ -6,9 +6,10 @@
 
 package com.ndemyanovskyi.app.res;
 
-import com.ndemyanovskyi.collection.list.UniqueArrayList;
-import com.ndemyanovskyi.throwable.RuntimeIOException;
 import com.ndemyanovskyi.app.localization.Language;
+import com.ndemyanovskyi.collection.set.ArrayListedSet;
+import com.ndemyanovskyi.collection.set.ListedSet;
+import com.ndemyanovskyi.throwable.RuntimeIOException;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -21,7 +22,7 @@ import java.util.Set;
 
 public abstract class FileResources<T> extends Resources<T> {
     
-    private UniqueArrayList<Entry<String, T>> data;
+    private ListedSet<Entry<String, T>> data;
     
     FileResources(Language language, String folder) {
 	super(language, Paths.get("res", "files", 
@@ -36,8 +37,8 @@ public abstract class FileResources<T> extends Resources<T> {
     @Override
     protected Set<Entry<String, T>> defaultEntrySet() {
 	return getDefaultResources() != this 
-		? getDefaultResources().data 
-		: data;
+		? getDefaultResources().data() 
+		: data();
     }
 
     @Override
@@ -101,8 +102,8 @@ public abstract class FileResources<T> extends Resources<T> {
 	}
     }*/
 
-    private UniqueArrayList<Entry<String, T>> data() {
-	return data != null ? data : (data = new UniqueArrayList<>());
+    private ListedSet<Entry<String, T>> data() {
+	return data != null ? data : (data = new ArrayListedSet<>());
     }
    
     private class FileEntry implements Entry<String, T> {

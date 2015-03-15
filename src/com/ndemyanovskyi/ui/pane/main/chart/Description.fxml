@@ -13,13 +13,12 @@
    <children>
       <GridPane fx:id="content" maxWidth="400.0" styleClass="descriptionPane">
          <columnConstraints>
-            <ColumnConstraints minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints minWidth="10.0" />
             <ColumnConstraints minWidth="10.0" prefWidth="100.0" />
          </columnConstraints>
          <rowConstraints>
-            <RowConstraints minHeight="10.0" prefHeight="30.0" />
-         </rowConstraints>
-      </GridPane>
+            <RowConstraints minHeight="10.0" />
+         </rowConstraints></GridPane>
    </children>
    <effect>
       <DropShadow blurType="TWO_PASS_BOX" height="132.95" radius="65.975" width="132.95" />

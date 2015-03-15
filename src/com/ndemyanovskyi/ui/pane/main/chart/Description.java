@@ -25,7 +25,7 @@ import javafx.scene.layout.GridPane;
  *
  * @author Назарій
  */
-public class DescriptionPane extends InitializableVBox {
+public class Description extends InitializableVBox {
     
     @FXML
     private GridPane content;
@@ -33,7 +33,7 @@ public class DescriptionPane extends InitializableVBox {
     private final ListProperty<Item<?>> data = 
             new SimpleListProperty<>(FXCollections.observableArrayList());
     
-    public DescriptionPane() {
+    public Description() {
         final InvalidationListener listListener = p -> updateContent();
         data.addListener((property, oldList, newList) -> {
             if(oldList != null) {

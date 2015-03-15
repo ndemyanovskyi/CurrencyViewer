@@ -1,8 +1,23 @@
 package com.ndemyanovskyi.ui.pane.main.chart;
 
+import com.ndemyanovskyi.app.Application;
+import static com.ndemyanovskyi.app.Constants.MINIMAL_PERIOD;
+import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
+import com.ndemyanovskyi.app.res.Resources;
+import com.ndemyanovskyi.backend.Rate;
+import com.ndemyanovskyi.backend.RateList;
+import com.ndemyanovskyi.backend.Task;
 import com.ndemyanovskyi.collection.FilteredCollection;
 import com.ndemyanovskyi.time.Period;
 import com.ndemyanovskyi.time.Range;
+import com.ndemyanovskyi.ui.anim.Animator;
+import com.ndemyanovskyi.ui.anim.FadeAnimator;
+import com.ndemyanovskyi.ui.anim.ScaleAnimator;
+import com.ndemyanovskyi.ui.anim.TranslateAnimator;
+import com.ndemyanovskyi.ui.pane.DelayedResizePane;
+import com.ndemyanovskyi.ui.pane.main.chart.Description.Item;
+import com.ndemyanovskyi.ui.pane.main.chart.legend.Legend;
+import com.ndemyanovskyi.ui.toast.Toast;
 import com.ndemyanovskyi.util.BiConverter;
 import com.ndemyanovskyi.util.Compare;
 import static com.ndemyanovskyi.util.Compare.less;
@@ -10,20 +25,6 @@ import com.ndemyanovskyi.util.Convert;
 import static com.ndemyanovskyi.util.Convert.toDate;
 import static com.ndemyanovskyi.util.Convert.toLocalDate;
 import com.ndemyanovskyi.util.beans.ConvertedBinding;
-import com.ndemyanovskyi.app.Application;
-import static com.ndemyanovskyi.app.Constants.MINIMAL_PERIOD;
-import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
-import com.ndemyanovskyi.app.res.Resources;
-import com.ndemyanovskyi.backend.Bank;
-import com.ndemyanovskyi.backend.Currency;
-import com.ndemyanovskyi.backend.Rate;
-import com.ndemyanovskyi.backend.RateList;
-import com.ndemyanovskyi.backend.Task;
-import com.ndemyanovskyi.ui.pane.DelayedResizePane;
-import com.ndemyanovskyi.ui.pane.VisibilityAnimator;
-import com.ndemyanovskyi.ui.pane.main.chart.DescriptionPane.Item;
-import com.ndemyanovskyi.ui.pane.main.chart.legend.Legend;
-import com.ndemyanovskyi.ui.toast.Toast;
 import java.net.URL;
 import java.time.LocalDate;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -63,8 +64,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class ChartPane extends DelayedResizePane {
-
-    @FXML private Pane root;
     
     @FXML private XYChart<Date, Float> chart;
     @FXML private DateAxis xAxis;
@@ -74,9 +73,14 @@ public class ChartPane extends DelayedResizePane {
     @FXML private DatePicker toDatePicker;
     @FXML private HBox legendPane;
     
-    @FXML private Line line;
+    @FXML private Pane centerPane;
+    
+    @FXML private Line cursor;
     @FXML private Region chartContent;
-    @FXML private DescriptionPane descriptionPane;
+    
+    @FXML private Pane descriptionPane;
+    @FXML private Pane eventedPane;
+    @FXML private Description description;
 
     private IntentsManager intentsManager;
     private Range range;
@@ -117,14 +121,44 @@ public class ChartPane extends DelayedResizePane {
         ConvertedBinding.bind(
                 toDatePicker.valueProperty(), xAxis.upperBoundProperty(), 
                 BiConverter.of(Convert::toDate, Convert::toLocalDate));
-                
+          
+        /*Timeline t = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
+            Settings.LANGUAGE.set(Language.values()[(int) (Math.random() * 3)]);
+        }));
+        t.setCycleCount(Animation.INDEFINITE);
+        t.play();*/
+        
         initChart();    
-        getIntents().add(Bank.NBU, Currency.EUR);
+        
+        chart.prefWidthProperty().bind(centerPane.widthProperty());
+        chart.prefHeightProperty().bind(centerPane.heightProperty());
+        
+        eventedPane.layoutXProperty().bind(chart.layoutXProperty().add(yAxis.widthProperty()).add(15));
+        eventedPane.layoutYProperty().bind(chart.layoutYProperty().add(15));
+        eventedPane.prefWidthProperty().bind(chart.widthProperty().subtract(yAxis.widthProperty()).subtract(30));
+        eventedPane.prefHeightProperty().bind(chart.heightProperty().subtract(xAxis.heightProperty()).subtract(30));
+        
+        /*description.layoutXProperty().bind(Bindings.createDoubleBinding(() -> {
+            return cursor.getStartX() + description.getWidth() > chartContent.getWidth();
+        }, cursor.startXProperty()));*/
+        
+        /*line.endYProperty().bind(Bindings.createDoubleBinding(() -> {
+            return yAxis.getLayoutY() + yAxis.getHeight();
+        }, yAxis.heightProperty()));*/
+        
+        /*ScaleTransition st = new ScaleTransition(Duration.seconds(1));
+        st.setNode(this);
+        st.setToX(0.9);
+        st.setToY(0.9);
+        st.setCycleCount(Animation.INDEFINITE);
+        st.play();*/
+        
+        /*getIntents().add(Bank.NBU, Currency.EUR);
         getIntents().add(Bank.FIDOBANK, Currency.EUR, Rate.Field.SALE);
         getIntents().add(Bank.SBER_BANK, Currency.EUR, Rate.Field.BUY);
         getIntents().add(Bank.FIDOBANK, Currency.EUR, Rate.Field.BUY);
         getIntents().add(Bank.OSCHAD_BANK, Currency.EUR, Rate.Field.BUY);
-        getIntents().add(Bank.PRIVAT_BANK, Currency.EUR, Rate.Field.BUY);
+        getIntents().add(Bank.PRIVAT_BANK, Currency.EUR, Rate.Field.BUY);*/
     } 
     
     private static void newThread(Runnable runnable) {
@@ -211,7 +245,7 @@ public class ChartPane extends DelayedResizePane {
             private final Legend legend;
             private Task task;
             private final Series<Date, Float> series;
-            private VisibilityAnimator animator;
+            private Animator animator;
 
             private boolean disposed;
 
@@ -222,8 +256,16 @@ public class ChartPane extends DelayedResizePane {
                 this.task = new Task();
                 this.item = new Item<>(intent);
                 
-                descriptionPane.getData().add(item);
+                description.getData().add(item);
                 legendPane.getChildren().add(legend);
+            }
+
+            public void setAnimator(Animator animator) {
+                this.animator = animator;
+            }
+
+            public Animator getAnimator() {
+                return animator;
             }
 
             @Override
@@ -261,7 +303,7 @@ public class ChartPane extends DelayedResizePane {
                     disposed = true;
                     
                     seriesControllers.remove(getIntent());
-                    descriptionPane.getData().remove(item);
+                    description.getData().remove(item);
                     chart.getData().remove(getSeries());
                     legendPane.getChildren().remove(getLegend());
                     if(task.isRunning()) task.cancel();
@@ -293,7 +335,9 @@ public class ChartPane extends DelayedResizePane {
                                        
                                 int index = indexFor(list, rate);
                                 //When animation enabled, weird NPE throws when new data adding to series
-                                series.getData().add(index, new Data<>(date, value));
+                                Application.execute(() -> {
+                                    series.getData().add(index, new Data<>(date, value));
+                                });
                             }
                         }
                     }else {
@@ -335,7 +379,7 @@ public class ChartPane extends DelayedResizePane {
                         }
                     }
                     chart.getData().add(series);
-                    animator = new VisibilityAnimator(Duration.millis(200), series.getNode(), null, 0.1, 1.0);
+                    animator = new FadeAnimator(Duration.millis(200), 0.1, 1.0, series.getNode());
                     setSeriesColor(series, legend.getIntent().getColor());
                     legend.addEventHandler(MouseEvent.MOUSE_ENTERED, ChartPane.this::onLegendMouseEntered);
                     legend.addEventHandler(MouseEvent.MOUSE_EXITED, ChartPane.this::onLegendMouseExited);
@@ -396,21 +440,25 @@ public class ChartPane extends DelayedResizePane {
     }
 
     //<editor-fold defaultstate="collapsed" desc="Chart sensitive methods">    
-    private final VisibilityAnimator lineAnimator = new VisibilityAnimator(line);
+    private final Animator cursorAnimator = Animator.group(
+                    new FadeAnimator(cursor, description), 
+                    TranslateAnimator.ofY(10, 0, description),
+                    ScaleAnimator.ofXY(0.9, 1, 0.9, 1, description));
     private double previousX;
+    private boolean dragged = false;
     
     @FXML 
     private void onLegendMouseEntered(MouseEvent e) {
-        Map<Intent<?>, IntentsManager.SeriesController<?>> scs = intentsManager.seriesControllers;
+        Map<Intent<?>, IntentsManager.SeriesController<?>> scs = intentsManager.getSeriesControllers();
         IntentsManager.SeriesController<?> entered = scs.get(((Legend) e.getSource()).getIntent());
-                
-        VisibilityAnimator enteredAnimator = entered.animator;
+        
+        Animator enteredAnimator = entered.getAnimator();
         if(enteredAnimator != null) {
-            enteredAnimator.show();
+            enteredAnimator.playUp();
             for(IntentsManager.SeriesController<?> sc : scs.values()) {
-                if(sc != entered) {
-                    VisibilityAnimator tempAnimator = sc.animator;
-                    if(tempAnimator != null) tempAnimator.hide();
+                Animator tempAnimator = sc.getAnimator();
+                if(sc != entered && tempAnimator != null) {
+                    tempAnimator.playDown();
                 }
             }
         }
@@ -420,49 +468,43 @@ public class ChartPane extends DelayedResizePane {
     private void onLegendMouseExited(MouseEvent e) {
         Map<Intent<?>, IntentsManager.SeriesController<?>> scs = intentsManager.seriesControllers;
         for(IntentsManager.SeriesController<?> sc : scs.values()) {
-            VisibilityAnimator tempAnimator = sc.animator;
-            if(tempAnimator != null) tempAnimator.show();
+            Animator animator = sc.getAnimator();
+            if(animator != null) animator.playUp();
         }
     }
     
     @FXML
-    private void onChartMouseExited(MouseEvent e) {
-        lineAnimator.hide();
+    private void onEventedPaneMouseExited(MouseEvent e) {
+        if(!dragged) cursorAnimator.playDown();
     }
     
     @FXML
-    private void onChartMouseMoved(MouseEvent e) {
-        double xOffset = yAxis.getWidth() + yAxis.getLayoutX();
-        double yOffset = xAxis.getLayoutY();
-        Point2D point = chartContent.sceneToLocal(e.getSceneX(), e.getSceneY());
-        
-        if(chartContent.contains(point)) {
-            lineAnimator.show();
-            line.setStartX(e.getX());
-            line.setEndX(e.getX());
-        } else {
-            lineAnimator.hide();
-        }
-        updateCursor(e.getScreenX(), e.getScreenY());
+    private void onEventedPaneMouseMoved(MouseEvent e) {
+        cursorAnimator.playUp();
+        cursor.setStartX(e.getX());
+        cursor.setEndX(e.getX());
+        updateCursor(xAxis.screenToLocal(e.getScreenX(), e.getScreenY()).getX());
     }
     
     @FXML
-    private void onChartMousePressed(MouseEvent e) {
+    private void onEventedPaneMousePressed(MouseEvent e) {
         previousX = e.getX();
-        if(getScene() != null) {
-            getScene().setCursor(Cursor.MOVE);
+        getScene().setCursor(Cursor.MOVE);
+    }
+    
+    @FXML
+    private void onEventedPaneMouseReleased(MouseEvent e) {
+        dragged = false;
+        setCursor(Cursor.DEFAULT);
+        if(!contains(e.getX(), e.getY())) {
+            cursorAnimator.playDown();
         }
     }
     
     @FXML
-    private void onChartMouseReleased(MouseEvent e) {
-        if(getScene() != null) {
-            getScene().setCursor(Cursor.DEFAULT);
-        }
-    }
-    
-    @FXML
-    private void onChartMouseDragged(MouseEvent e) {
+    private void onEventedPaneMouseDragged(MouseEvent e) {
+        dragged = true;
+        
         long offset = (long) ((previousX - e.getX()) / (xAxis.getWidth()
                 / (xAxis.getUpperBound().getTime() - xAxis.getLowerBound().getTime())));
         
@@ -482,7 +524,7 @@ public class ChartPane extends DelayedResizePane {
         }        
         
         previousX = e.getX();
-        updateCursor(e.getScreenX(), e.getScreenY());
+        updateCursor(xAxis.screenToLocal(cursor.localToScreen(cursor.getBoundsInLocal())).getMinX());
     }
     
     private static Toast.Builder toastBuilder(DatePicker picker) {
@@ -574,7 +616,7 @@ public class ChartPane extends DelayedResizePane {
     }  
     
     @FXML
-    private void onChartScroll(ScrollEvent e) {
+    private void onEventedPaneScroll(ScrollEvent e) {
         double coef = (xAxis.getUpperBound().getTime() - xAxis.getLowerBound().getTime()) / 5;
                 
         Point2D pos = chartContent.sceneToLocal(e.getSceneX(), e.getSceneY());
@@ -599,7 +641,7 @@ public class ChartPane extends DelayedResizePane {
                     getAsInteger("min_series_date_difference");
             
             if(upper - lower >= TimeUnit.DAYS.toMillis(minDifference)) {
-                updateCursor(e.getScreenX(), e.getScreenY());
+                updateCursor(xAxis.screenToLocal(e.getScreenX(), e.getScreenY()).getX());
                 long min = toDate(range.first()).getTime();
                 long max = toDate(range.last()).getTime();
 
@@ -618,8 +660,8 @@ public class ChartPane extends DelayedResizePane {
                 : new Date(date.getYear(), date.getMonth(), date.getDate() + 1);
     }
     
-    private void updateCursor(double x, double y) {        
-        LocalDate date = toLocalDate(round(xAxis.getValueForDisplay(xAxis.screenToLocal(x, y).getX())));
+    private void updateCursor(double x) {        
+        LocalDate date = toLocalDate(round(xAxis.getValueForDisplay(x)));
         
         for(IntentsManager.SeriesController<?> sc : getIntentsManager().getSeriesControllers().values()) {
             RateList<?> list = sc.getTask().getRateList();

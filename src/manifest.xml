@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <mainfest>
-    <item name="main_content_type">com.qguest.ui.pane.main.MainPane</item>
+    <item name="main_content_type">com.ndemyanovskyi.ui.pane.main.MainPane</item>
     <!--<item name="error_handler_type">com.qguest.ui.pane.main.MainPane</item>-->
     <item name="main_stage_style">decorated</item>
 </mainfest>

@@ -5,13 +5,15 @@
  */
 package com.ndemyanovskyi.app.res;
 
-import com.ndemyanovskyi.collection.Collections;
-import com.ndemyanovskyi.collection.list.UniqueArrayList;
 import com.ndemyanovskyi.app.localization.Language;
+import com.ndemyanovskyi.collection.Collections;
+import com.ndemyanovskyi.collection.set.ArrayListedSet;
+import com.ndemyanovskyi.collection.set.ListedSet;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -25,23 +27,23 @@ public abstract class ValueResources<T> extends Resources<T> {
 
     static final String EXTENSION = "xml";
     
-    private UniqueArrayList<Entry<String, T>> data;
+    private ListedSet<Entry<String, T>> data;
     
     private final String name;
-    private final UniqueArrayList<String> elementTags;
+    private final List<String> elementTags;
 
     ValueResources(Language language, String name, Collection<String> elementTags) {
 	super(language, Paths.get("res", "values", 
 		language.tag().toLowerCase(), name + "." + EXTENSION));
-	this.elementTags = new UniqueArrayList<>(
+	this.elementTags = new ArrayListedSet<>(
 		Collections.requireNonEmpty(elementTags));
 
 	this.name = Objects.requireNonNull(name);
 	read();
     }
 
-    private UniqueArrayList<Entry<String, T>> data() {
-	return data != null ? data : (data = new UniqueArrayList<>());
+    private ListedSet<Entry<String, T>> data() {
+	return data != null ? data : (data = new ArrayListedSet<>());
     }
 
     protected abstract T convert(String nodeName, String text);
@@ -53,8 +55,8 @@ public abstract class ValueResources<T> extends Resources<T> {
     @Override
     protected Set<Entry<String, T>> defaultEntrySet() {
 	return getDefaultResources() != this 
-		? getDefaultResources().data 
-		: data;
+		? getDefaultResources().data() 
+		: data();
     }
 
     /*@Override
@@ -157,6 +159,11 @@ public abstract class ValueResources<T> extends Resources<T> {
 	public T setValue(T value) {
 	    throw new UnsupportedOperationException("setValue");
 	}
+
+        @Override
+        public int hashCode() {
+            return super.hashCode();
+        }
 
 	@Override
 	public boolean equals(Object obj) {

@@ -10,29 +10,45 @@ import com.ndemyanovskyi.backend.Bank;
 import com.ndemyanovskyi.backend.Currency;
 import com.ndemyanovskyi.backend.Rate;
 import com.ndemyanovskyi.backend.Rate.Field;
-import com.sun.javafx.collections.ObservableSetWrapper;
-import java.util.HashSet;
+import com.ndemyanovskyi.util.beans.collections.ObservableSortedSetWrapper;
+import java.util.Comparator;
 import java.util.Iterator;
+import java.util.TreeSet;
 import javafx.beans.property.ReadOnlyProperty;
 
 /**
  *
  * @author Назарій
  */
-public final class Intents extends ObservableSetWrapper<Intent<?>> {
+public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
 
+    public static final Comparator<Intent<?>> COMPARATOR = 
+            (a, b) -> a.getInstant().compareTo(b.getInstant());
+    
     private final ReadOnlyProperty<Number> maxSeriesCount = 
             ResourceBindings.numbers().get("max_series_count");
     
     public Intents() {
-        super(new HashSet<>());
-        maxSeriesCount.addListener((property, oldValue, newValue) -> {
-            int difference = newValue.intValue() - size();
-            Iterator<Intent<?>> it = iterator();
-            while(difference-- > 0 && it.hasNext()) {
-                it.remove();
-            }
-        });
+        super(new TreeSet<>(COMPARATOR));
+        maxSeriesCount.addListener(p -> truncate());
+    }
+    
+    private void truncate() {
+        int difference = size() - maxSeriesCount.getValue().intValue();
+        Iterator<Intent<?>> it = iterator();
+        while(difference-- > 0 && it.hasNext()) {
+            it.next();
+            it.remove();
+        }
+    }
+    
+    private void truncateForAdd() {
+        int difference = size() - maxSeriesCount.getValue().intValue();
+        Iterator<Intent<?>> it = iterator();
+        while(difference-- >= 0 && it.hasNext()) {
+            it.next();
+            it.remove();
+        }
     }
 
     public <R extends Rate> Intent<R> add(Bank<R> bank, Currency currency) {
@@ -40,17 +56,14 @@ public final class Intents extends ObservableSetWrapper<Intent<?>> {
     }
 
     public <R extends Rate> Intent<R> add(Bank<R> bank, Currency currency, Field field) {
-        if(size() < maxSeriesCount.getValue().intValue()) {
-            Intent<R> intent = get(bank, currency, field);
-            if(intent == null) {
-                intent = new Intent<>(bank, currency, field);
-                intent.setAttached(true);
-                add(intent);
-            }
-            return intent;
-        } else {
-            return null;
+        truncateForAdd();
+        Intent<R> intent = get(bank, currency, field);
+        if(intent == null) {
+            intent = new Intent<>(bank, currency, field);
+            intent.setAttached(true);
+            add(intent);
         }
+        return intent;
     }
      
     public Intent<?> get(Object o) {
@@ -91,5 +104,6 @@ public final class Intents extends ObservableSetWrapper<Intent<?>> {
         }
         return false;
     }
+    
     
 }

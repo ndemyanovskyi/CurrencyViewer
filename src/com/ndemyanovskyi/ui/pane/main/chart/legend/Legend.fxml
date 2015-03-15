@@ -15,11 +15,11 @@
     <children>
         <VBox fx:id="titleBox" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="2.0">
             <children>
-                <Label fx:id="labelBank" style="-fx-text-fill: gray;" text="${controller.intent.bank.displayName}" />
+                <Label fx:id="bankLabel" style="-fx-text-fill: gray;" text="${controller.intent.bank.displayName}" />
                 <Line fx:id="colorLine" endX="${titleBox.width - 2}" startX="0.0" stroke="${controller.intent.color}" strokeWidth="2.0" />
                 <HBox fx:id="bottomBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="5.0">
                     <children>
-                        <Label fx:id="typeLabel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-text-fill: gray;" text="${controller.intent.field.displayName}">
+                        <Label fx:id="fieldLabel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-text-fill: gray;" text="${controller.intent.field.displayName}">
                             <font>
                                 <Font size="12.0" />
                             </font>

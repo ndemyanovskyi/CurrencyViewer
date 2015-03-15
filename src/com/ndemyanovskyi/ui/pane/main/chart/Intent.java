@@ -6,24 +6,26 @@
 
 package com.ndemyanovskyi.ui.pane.main.chart;
 
-import com.ndemyanovskyi.util.beans.FinalNonNullProperty;
 import com.ndemyanovskyi.backend.Bank;
 import com.ndemyanovskyi.backend.Currency;
 import com.ndemyanovskyi.backend.Rate;
 import com.ndemyanovskyi.backend.Rate.Field;
+import com.ndemyanovskyi.util.beans.FinalNonNullProperty;
+import java.time.Instant;
 import java.util.Objects;
 import javafx.beans.property.BooleanProperty;
-import javafx.beans.property.ReadOnlyProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.scene.paint.Color;
 
 
 public class Intent<R extends Rate> { 
     
-    private final ReadOnlyProperty<Bank<R>> bank;
-    private final ReadOnlyProperty<Currency> currency;
-    private final ReadOnlyProperty<Field> field;
-    private final ReadOnlyProperty<Color> color;
+    private final ReadOnlyObjectProperty<Bank<R>> bank;
+    private final ReadOnlyObjectProperty<Currency> currency;
+    private final ReadOnlyObjectProperty<Field> field;
+    private final ReadOnlyObjectProperty<Color> color;
+    private final ReadOnlyObjectProperty<Instant> instant;
     
     private final BooleanProperty showing = new SimpleBooleanProperty(this, "showing", false);
     private final BooleanProperty shown = new SimpleBooleanProperty(this, "shown", false);
@@ -44,6 +46,7 @@ public class Intent<R extends Rate> {
 	this.currency = new FinalNonNullProperty<>(this, "currency", currency);
 	this.field = new FinalNonNullProperty<>(this, "field", field);
 	this.color = new FinalNonNullProperty<>(this, "color", color);
+        this.instant = new FinalNonNullProperty<>(this, "instant", Instant.now());
         
         if(!bank.getCurrencys().contains(currency)) {
             throw new IllegalArgumentException(
@@ -69,34 +72,42 @@ public class Intent<R extends Rate> {
     }
 
     public Currency getCurrency() {
-	return currency.getValue();
+	return currency.get();
     }
 
     public Color getColor() {
-	return color.getValue();
+	return color.get();
     }
 
     public Bank<R> getBank() {
-	return bank.getValue();
+	return bank.get();
     }
 
     public Field getField() {
-        return field.getValue();
+        return field.get();
+    }
+
+    public Instant getInstant() {
+        return instant.get();
+    }
+
+    public ReadOnlyObjectProperty<Instant> instantProperty() {
+        return instant;
     }
     
-    public ReadOnlyProperty<Bank<R>> bankProperty() {
+    public ReadOnlyObjectProperty<Bank<R>> bankProperty() {
         return bank;
     }
     
-    public ReadOnlyProperty<Currency> currencyProperty() {
+    public ReadOnlyObjectProperty<Currency> currencyProperty() {
         return currency;
     }
     
-    public ReadOnlyProperty<Field> fieldProperty() {
+    public ReadOnlyObjectProperty<Field> fieldProperty() {
         return field;
     }
     
-    public ReadOnlyProperty<Color> colorProperty() {
+    public ReadOnlyObjectProperty<Color> colorProperty() {
         return color;
     }
     

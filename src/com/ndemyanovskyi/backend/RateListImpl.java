@@ -194,7 +194,7 @@ final class RateListImpl<R extends Rate> extends ObservableListWrapper<R> implem
     class Modifier<T extends R> {
         
         //<editor-fold defaultstate="collapsed" desc="Adding">
-        public boolean addOrThrow(T rate) {
+        public int addOrThrow(T rate) {
             Objects.requireNonNull(rate, "rate");
             if(rate.getList() != null) {
                 throw new IllegalArgumentException(
@@ -226,13 +226,14 @@ final class RateListImpl<R extends Rate> extends ObservableListWrapper<R> implem
             }
             rate.setList(RateListImpl.this);
             RateListImpl.super.add(index, rate);
-            return true;
+            return index;
         }
         
         public boolean addAllOrThrow(Collection<? extends T> c) {
             boolean modified = false;
             for(T r : c) {
-                modified |= addOrThrow(r);
+                addOrThrow(r);
+                modified = true;
             }
             return modified;
         }
@@ -240,32 +241,20 @@ final class RateListImpl<R extends Rate> extends ObservableListWrapper<R> implem
         public boolean addAll(Collection<? extends T> c) {
             boolean modified = false;
             for(T r : c) {
-                modified |= add(r);
+                modified |= add(r) >= 0;
             }
             return modified;
         }
         
-        public boolean add(T rate) {
+        public int add(T rate) {
             if(rate == null
                     || rate.getList() != null
                     || periodBuilder.contains(rate.getDate())
                     || !rate.getBank().equals(getBank())
                     || !rate.getCurrency().equals(getCurrency())) {
-                return false;
+                return -1;
             }
-            
-            periodBuilder.plusDate(rate.getDate());
-            
-            int index = size();
-            for(int i = 0; i < size(); i++) {
-                if(get(i).getDate().compareTo(rate.getDate()) > 0) {
-                    index = i;
-                    break;
-                }
-            }
-            rate.setList(RateListImpl.this);
-            RateListImpl.super.add(index, rate);
-            return true;
+            return addOrThrow(rate);
         }
         //</editor-fold>
         
