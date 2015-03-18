@@ -10,8 +10,15 @@
 <?import javafx.scene.layout.*?>
 <?import com.ndemyanovskyi.ui.pane.main.chart.*?>
 
-<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="BorderPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<BorderPane maxHeight="-Infinity" stylesheets="@MainPane.css" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <center>
         <ChartPane fx:id="chartPane" layoutX="0.0" layoutY="0.0" prefHeight="400.0" prefWidth="400.0" />
     </center>
-</fx:root>
+   <top>
+      <HBox BorderPane.alignment="CENTER">
+         <children>
+            <Button styleClass="settings-button" text="::{settings}" />
+         </children>
+      </HBox>
+   </top>
+</BorderPane>

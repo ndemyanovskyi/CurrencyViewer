@@ -136,24 +136,31 @@ final class RateListImpl<R extends Rate> extends ObservableListWrapper<R> implem
 
         @Override
         public RateList<R> subList(Interval period) {
+            checkModCount();
             return new SubRateList<>(list, this.period.cross(period));
         }
 
         @Override
         public RateList<R> subList(int fromIndex, int toIndex) {
+            checkModCount();
             return RateList.super.subList(fromIndex, toIndex);
         }
 
         @Override
         public int size() {
+            checkModCount();
             return period.size();
+        }
+        
+        private void checkModCount() {
+            if(list.modCount != modCount) {
+                throw new ConcurrentModificationException();
+            }
         }
 
         @Override
         public R get(int index) {
-            if(list.modCount != modCount) {
-                throw new ConcurrentModificationException();
-            }
+            checkModCount();
             if(index < 0 || index > size()) {
                 throw new IndexOutOfBoundsException(
                         String.format("index = %d; size = %d", index, size()));
@@ -192,120 +199,163 @@ final class RateListImpl<R extends Rate> extends ObservableListWrapper<R> implem
     
     //<editor-fold defaultstate="collapsed" desc="Modifier class">
     class Modifier<T extends R> {
-        
-        //<editor-fold defaultstate="collapsed" desc="Adding">
+
+        private final Object mutex = new Object();
+
+        //<editor-fold defaultstate="collapsed" desc="add">
         public int addOrThrow(T rate) {
-            Objects.requireNonNull(rate, "rate");
-            if(rate.getList() != null) {
-                throw new IllegalArgumentException(
-                        "Rate(" + rate + ") already contains in some RateList");
-            }
-            if(periodBuilder.contains(rate.getDate())) {
-                throw new IllegalArgumentException(
-                        "Rate with date " + rate.getDate() + " already contains in this RateList");
-            }
-            if(!rate.getBank().equals(getBank())) {
-                throw new IllegalArgumentException(String.format(
-                        "Rate bank(%s) not equals RateList bank(%s)",
-                        rate.getBank(), getBank()));
-            }
-            if(!rate.getCurrency().equals(getCurrency())) {
-                throw new IllegalArgumentException(String.format(
-                        "Rate currency(%s) not equals RateList currency(%s)",
-                        rate.getCurrency(), getCurrency()));
-            }
-            
-            periodBuilder.plusDate(rate.getDate());
-            
-            int index = size();
-            for(int i = 0; i < size(); i++) {
-                if(get(i).getDate().compareTo(rate.getDate()) > 0) {
-                    index = i;
-                    break;
+            synchronized(mutex) {
+                Objects.requireNonNull(rate, "rate");
+                if(rate.getList() != null) {
+                    throw new IllegalArgumentException(
+                            "Rate(" + rate + ") already contains in some RateList");
                 }
+                if(periodBuilder.contains(rate.getDate())) {
+                    throw new IllegalArgumentException(
+                            "Rate with date " + rate.getDate() + " already contains in this RateList");
+                }
+                if(!rate.getBank().equals(getBank())) {
+                    throw new IllegalArgumentException(String.format(
+                            "Rate bank(%s) not equals RateList bank(%s)",
+                            rate.getBank(), getBank()));
+                }
+                if(!rate.getCurrency().equals(getCurrency())) {
+                    throw new IllegalArgumentException(String.format(
+                            "Rate currency(%s) not equals RateList currency(%s)",
+                            rate.getCurrency(), getCurrency()));
+                }
+
+                periodBuilder.plusDate(rate.getDate());
+
+                int index = size();
+                for(int i = 0; i < size(); i++) {
+                    if(get(i).getDate().compareTo(rate.getDate()) > 0) {
+                        index = i;
+                        break;
+                    }
+                }
+                rate.setList(RateListImpl.this);
+                RateListImpl.super.add(index, rate);
+                return index;
             }
-            rate.setList(RateListImpl.this);
-            RateListImpl.super.add(index, rate);
-            return index;
         }
-        
+
         public boolean addAllOrThrow(Collection<? extends T> c) {
-            boolean modified = false;
-            for(T r : c) {
-                addOrThrow(r);
-                modified = true;
+            synchronized(mutex) {
+                boolean modified = false;
+                for(T r : c) {
+                    addOrThrow(r);
+                    modified = true;
+                }
+                return modified;
             }
-            return modified;
         }
-        
+
         public boolean addAll(Collection<? extends T> c) {
-            boolean modified = false;
-            for(T r : c) {
-                modified |= add(r) >= 0;
+            synchronized(mutex) {
+                boolean modified = false;
+                for(T r : c) {
+                    modified |= add(r) >= 0;
+                }
+                return modified;
             }
-            return modified;
         }
-        
+
         public int add(T rate) {
-            if(rate == null
-                    || rate.getList() != null
-                    || periodBuilder.contains(rate.getDate())
-                    || !rate.getBank().equals(getBank())
-                    || !rate.getCurrency().equals(getCurrency())) {
-                return -1;
+            synchronized(mutex) {
+                if(rate == null
+                        || rate.getList() != null
+                        || periodBuilder.contains(rate.getDate())
+                        || !rate.getBank().equals(getBank())
+                        || !rate.getCurrency().equals(getCurrency())) {
+                    return -1;
+                }
+                return addOrThrow(rate);
             }
-            return addOrThrow(rate);
         }
         //</editor-fold>
+
+        //<editor-fold defaultstate="collapsed" desc="replace">
+        public T replaceOrThrow(T rate) {
+            synchronized(mutex) {
+                T old = (T) get(rate.getDate());
+                if(old == null) {
+                    throw new IllegalArgumentException(String.format(
+                            "Rate(%s) can`t be replaced. Other rate with date %s not contains.",
+                            rate, rate.getDate()));
+                }
+
+                removeOrThrow(old);
+                addOrThrow(rate);
+                return old;
+            }
+        }
         
-        //<editor-fold defaultstate="collapsed" desc="Removing">
+        public T replace(T rate) {
+            T old = remove(rate.getDate());
+            if(old != null) add(rate);
+            return old;
+        }
+        //</editor-fold>
+
+        //<editor-fold defaultstate="collapsed" desc="remove">
         public T removeOrThrow(int index) {
-            T rate = (T) RateListImpl.super.remove(index);
-            periodBuilder.minusDate(rate.getDate());
-            rate.setList(null);
-            return rate;
+            synchronized(mutex) {
+                T rate = (T) RateListImpl.super.remove(index);
+                periodBuilder.minusDate(rate.getDate());
+                rate.setList(null);
+                return rate;
+            }
         }
-        
+
         public T removeOrThrow(LocalDate date) {
-            if(!periodBuilder.contains(date)) {
-                throw new IllegalArgumentException(
-                        "Rate with date " + date + " not contains in this RateList");
+            synchronized(mutex) {
+                if(!periodBuilder.contains(date)) {
+                    throw new IllegalArgumentException(
+                            "Rate with date " + date + " not contains in this RateList");
+                }
+                return removeOrThrow(periodBuilder.indexOf(date));
             }
-            return removeOrThrow(periodBuilder.indexOf(date));
         }
-        
+
         public T removeOrThrow(T rate) {
-            Objects.requireNonNull(rate, "rate");
-            
-            if(!rate.getBank().equals(getBank())) {
-                throw new IllegalArgumentException(String.format(
-                        "Rate bank(%s) not equals RateList bank(%s)",
-                        rate.getBank(), getBank()));
+            synchronized(mutex) {
+                Objects.requireNonNull(rate, "rate");
+
+                if(!rate.getBank().equals(getBank())) {
+                    throw new IllegalArgumentException(String.format(
+                            "Rate bank(%s) not equals RateList bank(%s)",
+                            rate.getBank(), getBank()));
+                }
+                if(!rate.getCurrency().equals(getCurrency())) {
+                    throw new IllegalArgumentException(String.format(
+                            "Rate currency(%s) not equals RateList currency(%s)",
+                            rate.getCurrency(), getCurrency()));
+                }
+
+                return removeOrThrow(rate.getDate());
             }
-            if(!rate.getCurrency().equals(getCurrency())) {
-                throw new IllegalArgumentException(String.format(
-                        "Rate currency(%s) not equals RateList currency(%s)",
-                        rate.getCurrency(), getCurrency()));
-            }
-            
-            return removeOrThrow(rate.getDate());
         }
-        
+
         public boolean removeAllOrThrow(Collection<? extends T> c) {
-            boolean modified = false;
-            for(T r : c) {
-                removeOrThrow(r);
-                modified = true;
+            synchronized(mutex) {
+                boolean modified = false;
+                for(T r : c) {
+                    removeOrThrow(r);
+                    modified = true;
+                }
+                return modified;
             }
-            return modified;
         }
-        
+
         public boolean removeAll(Collection<? extends T> c) {
-            boolean modified = false;
-            for(T r : c) {
-                modified |= remove(r) != null;
+            synchronized(mutex) {
+                boolean modified = false;
+                for(T r : c) {
+                    modified |= remove(r) != null;
+                }
+                return modified;
             }
-            return modified;
         }
         
         public T remove(int index) {

@@ -6,10 +6,10 @@
 
 package com.ndemyanovskyi.app.res;
 
+import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.collection.set.unmodifiable.AbstractUnmodifiableSet;
 import com.ndemyanovskyi.map.unmodifiable.AbstractUnmodifiableMap;
 import com.ndemyanovskyi.reflection.Reflection;
-import com.ndemyanovskyi.app.localization.Language;
 import java.io.InputStream;
 import java.net.URL;
 import java.nio.file.Path;
@@ -154,6 +154,7 @@ public abstract class Resources<T> extends AbstractUnmodifiableMap<String, T> {
     }
     
     public static InputStream getStream(String path) {
+        path = path.trim();
 	Class<?> c = path.startsWith("/")
 		? Resources.class 
 		: Reflection.getCallerClass();
@@ -162,6 +163,7 @@ public abstract class Resources<T> extends AbstractUnmodifiableMap<String, T> {
     }
     
     public static URL getUrl(String path) {
+        path = path.trim();
 	Class<?> c = path.startsWith("/")
 		? Resources.class 
 		: Reflection.getCallerClass();

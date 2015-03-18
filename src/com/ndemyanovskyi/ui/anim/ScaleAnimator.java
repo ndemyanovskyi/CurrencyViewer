@@ -6,9 +6,10 @@
 package com.ndemyanovskyi.ui.anim;
 
 import static com.ndemyanovskyi.ui.anim.AbstractAnimator.DEFAULT_DURATION;
-import java.util.Arrays;
-import java.util.Collection;
+import java.util.Objects;
 import javafx.animation.ScaleTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import javafx.scene.Node;
 import javafx.util.Duration;
 
@@ -16,174 +17,221 @@ import javafx.util.Duration;
  *
  * @author Назарій
  */
-public class ScaleAnimator extends AbstractAnimator<ScaleTransition> {
+public class ScaleAnimator extends AbstractAnimator<ScaleTransition, ScaleAnimator.Scale> {
     
-    private final double downX, upX, downY, upY, downZ, upZ;
-    
-    public ScaleAnimator(double downX, double upX, double downY, double upY, double downZ, double upZ, Collection<Node> nodes) {
-        this(DEFAULT_DURATION, downX, upX, downY, upY, downZ, upZ, nodes);
+    public ScaleAnimator(ObservableSet<Node> nodes) {
+        this(DEFAULT_DURATION, nodes);
     } 
     
-    public ScaleAnimator(double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        this(downX, upX, downY, upY, downZ, upZ, Arrays.asList(nodes));
+    public ScaleAnimator(Node... nodes) {
+        this(FXCollections.observableSet(nodes));
     } 
     
-    public ScaleAnimator(Duration duration, double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        this(duration, downX, upX, downY, upY, downZ, upZ, Arrays.asList(nodes));
+    public ScaleAnimator(Duration duration, Node... nodes) {
+        this(duration, FXCollections.observableSet(nodes));
     } 
     
-    public ScaleAnimator(Duration duration, double downX, double upX, double downY, double upY, double downZ, double upZ, Collection<Node> nodes) {
+    public ScaleAnimator(Duration duration, ObservableSet<Node> nodes) {
         super(duration, nodes);
-        this.downX = downX;
-        this.downY = downY;
-        this.downZ = downZ;
-        this.upX = upX;
-        this.upY = upY;
-        this.upZ = upZ;
     } 
-    
-    public static ScaleAnimator ofX(double downX, double upX, Node... nodes) {
-        return new ScaleAnimator(downX, upX, 0, 0, 0, 0, nodes);
-    }
-    
-    public static ScaleAnimator ofY(double downY, double upY, Node... nodes) {
-        return new ScaleAnimator(0, 0, downY, upY, 0, 0, nodes);
-    }
-    
-    public static ScaleAnimator ofZ(double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(0, 0, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofXZ(double downX, double upX, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(downX, upX, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofXY( double downX, double upX, double downY, double upY, Node... nodes) {
-        return new ScaleAnimator(downX, upX, downY, upY, 0, 0, nodes);
-    }
-    
-    public static ScaleAnimator ofYZ(double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(0, 0, downY, upY, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofXYZ(double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(downX, upX, downY, upY, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofX(Duration duration, double downX, double upX, Node... nodes) {
-        return new ScaleAnimator(duration, downX, upX, 0, 0, 0, 0, nodes);
-    }
-    
-    public static ScaleAnimator ofY(Duration duration, double downY, double upY, Node... nodes) {
-        return new ScaleAnimator(duration, 0, 0, downY, upY, 0, 0, nodes);
-    }
-    
-    public static ScaleAnimator ofZ(Duration duration, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(duration, 0, 0, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofXZ(Duration duration, double downX, double upX, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(duration, downX, upX, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofXY(Duration duration, double downX, double upX, double downY, double upY, Node... nodes) {
-        return new ScaleAnimator(duration, downX, upX, downY, upY, 0, 0, nodes);
-    }
-    
-    public static ScaleAnimator ofYZ(Duration duration, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(duration, 0, 0, downY, upY, downZ, upZ, nodes);
-    }
-    
-    public static ScaleAnimator ofXYZ(Duration duration, double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new ScaleAnimator(duration, downX, upX, downY, upY, downZ, upZ, nodes);
+
+    @Override
+    protected ScaleTransition initTransition(Node node, ScaleTransition transition, Scale state) {
+        transition = state.init(node, transition);
+        if(transition.getDuration().isUnknown()) {
+            transition.setDuration(getDuration());
+        }
+        return transition;
     }
 
-    public double getDownX() {
-        return downX;
-    }
-
-    public double getUpX() {
-        return upX;
-    }
-
-    public double getDownY() {
-        return downY;
-    }
-
-    public double getUpY() {
-        return upY;
-    }
-
-    public double getDownZ() {
-        return downZ;
-    }
-
-    public double getUpZ() {
-        return upZ;
-    }
-    
-    private double getProgress(Node node) {
-        double x = Math.abs((node.getScaleX() - downX) / (upX - downX));
-        double y = Math.abs((node.getScaleY() - downY) / (upY - downY));
-        double z = Math.abs((node.getScaleZ() - downZ) / (upZ - downZ));
-        
-        double[] arr = {x, y, z};
-        double sum = 0;
-        int count = 0;
-        for(double d : arr) {
-            if(d > 0 && Double.isFinite(d)) {
-                sum += d;
-                count++;
+    public void play(double x, double y, double z) {
+        Scale scale = null;
+        for(Scale o : getStates()) {
+            if(o.is(x, y, z)) {
+                scale = o;
+                break;
             }
         }
-        double res = sum / count;
-        return Double.isFinite(res) ? res : 0;
+        if(scale == null) {
+            scale = new Scale(x, y, z);
+        }
+        play(scale);
     }
 
-    @Override
-    protected Duration getDownOffset(Node node) {
-        return getDuration().multiply(1 - getProgress(node));
+    public void playX(double x) {
+        play(x, 1, 1);
     }
 
-    @Override
-    protected Duration getUpOffset(Node node) {
-        return getDuration().multiply(getProgress(node));
+    public void playY(double y) {
+        play(1, y, 1);
     }
 
-    @Override
-    protected ScaleTransition initUpTransition(Node node, ScaleTransition transition) {
-        if(transition == null) {
-            transition = new ScaleTransition();
+    public void playZ(double z) {
+        play(1, 1, z);
+    }
+
+    public void playXZ(double x, double z) {
+        play(x, 1, z);
+    }
+
+    public void playYZ(double y, double z) {
+        play(1, y, z);
+    }
+
+    public void playXYZ(double value) {
+        play(value, value, value);
+    }
+
+    public void playXY(double x, double y) {
+        play(x, y, 1);
+    }
+    
+    public static final class Scale implements Animator.State<ScaleTransition> {
+
+        private final double x, y, z;
+        private final Duration duration;
+
+        public Scale(double x, double y, double z) {
+            this(Duration.UNKNOWN, x, y, z);
+        }
+
+        public Scale(Duration duration, double x, double y, double z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.duration = duration;
         }
         
-        transition.setFromX(downX);
-        transition.setFromY(downY);
-        transition.setFromZ(downZ);
-        transition.setToX(upX);
-        transition.setToY(upY);
-        transition.setToZ(upZ);
-        transition.setDuration(getDuration());
-        transition.setNode(node);
-        
-        return transition;
-    }
-
-    @Override
-    protected ScaleTransition initDownTransition(Node node, ScaleTransition transition) {
-        if(transition == null) {
-            transition = new ScaleTransition();
+        //<editor-fold defaultstate="collapsed" desc="Static initializers">
+        public static Scale x(double x) {
+            return xyz(x, 1, 1);
         }
         
-        transition.setFromX(upX);
-        transition.setFromY(upY);
-        transition.setFromZ(upZ);
-        transition.setToX(downX);
-        transition.setToY(downY);
-        transition.setToZ(downZ);
-        transition.setDuration(getDuration());
-        transition.setNode(node);
+        public static Scale y(double y) {
+            return xyz(1, y, 1);
+        }
         
-        return transition;
+        public static Scale z(double z) {
+            return xyz(1, 1, z);
+        }
+        
+        public static Scale xy(double x, double y) {
+            return xyz(x, y, 1);
+        }
+        
+        public static Scale xz(double x, double z) {
+            return xyz(x, 1, z);
+        }
+        
+        public static Scale yz(double y, double z) {
+            return xyz(1, y, z);
+        }
+        
+        public static Scale xyz(double x, double y, double z) {
+            return new Scale(x, y, z);
+        }
+        
+        public static Scale xyz(double value) {
+            return xyz(value, value, value);
+        }
+        
+        public static Scale x(Duration duration, double x) {
+            return xyz(duration, x, 1, 1);
+        }
+        
+        public static Scale y(Duration duration, double y) {
+            return xyz(duration, 1, y, 1);
+        }
+        
+        public static Scale z(Duration duration, double z) {
+            return xyz(duration, 1, 1, z);
+        }
+        
+        public static Scale xy(Duration duration, double x, double y) {
+            return xyz(duration, x, y, 1);
+        }
+        
+        public static Scale xz(Duration duration, double x, double z) {
+            return xyz(duration, x, 1, z);
+        }
+        
+        public static Scale yz(Duration duration, double y, double z) {
+            return xyz(duration, 1, y, z);
+        }
+        
+        public static Scale xyz(Duration duration, double x, double y, double z) {
+            return new Scale(duration, x, y, z);
+        }
+        
+        public static Scale xyz(Duration duration, double value) {
+            return xyz(duration, value, value, value);
+        }
+        //</editor-fold>
+
+        @Override
+        public Duration getDuration() {
+            return duration;
+        }
+
+        public double getX() {
+            return x;
+        }
+
+        public double getZ() {
+            return z;
+        }
+
+        public double getY() {
+            return y;
+        }
+        
+        public boolean is(double x, double y, double z) {
+            return getX() == x && getY() == y && getZ() == z;
+        }
+
+        @Override
+        public ScaleTransition init(Node node, ScaleTransition transition) {
+            if(transition == null) {
+                transition = new ScaleTransition();
+            }
+
+            transition.setDuration(getDuration());
+            transition.setFromX(node.getScaleX());
+            transition.setFromY(node.getScaleY());
+            transition.setFromZ(node.getScaleZ());
+            transition.setToX(getX());
+            transition.setToY(getY());
+            transition.setToZ(getZ());
+            transition.setNode(node);
+
+            return transition;
+        }
+        
+        @Override
+        public boolean test(Node node) {
+            return is(node.getTranslateX(), node.getTranslateY(), node.getTranslateZ());
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 89 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
+            hash = 89 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
+            hash = 89 * hash + (int) (Double.doubleToLongBits(this.z) ^ (Double.doubleToLongBits(this.z) >>> 32));
+            hash = 89 * hash + Objects.hashCode(this.duration);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(o == this) return true;
+            if(o == null) return false;
+            if(!(o instanceof Scale)) return false;
+            
+            Scale other = (Scale) o;
+            return is(other.getX(), other.getY(), other.getZ());
+        }
+
     }
     
 }

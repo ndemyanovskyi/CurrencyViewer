@@ -5,25 +5,22 @@
  */
 package com.ndemyanovskyi.app;
 
-import com.ndemyanovskyi.reflection.Types;
-import com.ndemyanovskyi.throwable.RuntimeIOException;
-import com.ndemyanovskyi.throwable.RuntimeSQLException;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.localization.binding.Translation;
-import com.ndemyanovskyi.derby.Database;
+import com.ndemyanovskyi.reflection.Types;
 import java.awt.AWTException;
 import java.awt.SystemTray;
 import java.awt.TrayIcon;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
@@ -32,6 +29,7 @@ import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
@@ -101,14 +99,14 @@ public final class Application extends javafx.application.Application {
     @Override
     public void init() throws Exception {
         checkSecondInit(content);
-        content = manifest.getMainContentType().newInstance();
+        content = manifest.get(Manifest.MAIN_CONTENT_TYPE).newInstance();
         initErrorHandler();
     }
 
     private void initErrorHandler() throws Exception {
-        Class<EventHandler<? super ErrorEvent>> clazz = manifest.getErrorHandlerType();
+        Class<EventHandler<? super ErrorEvent>> type = manifest.get(Manifest.ERROR_HANDLER_TYPE);
 
-        if(clazz == null) {
+        if(type == null) {
             if(content instanceof EventHandler) {
                 Type t = Types.resolveGenericType(EventHandler.class, content.getClass());
                 if(t instanceof ParameterizedType) {
@@ -120,27 +118,36 @@ public final class Application extends javafx.application.Application {
                     }
                 }
             }
-        }else if(clazz.equals(content.getClass())) {
+        }else if(type.equals(content.getClass())) {
             setOnError((EventHandler<? super ErrorEvent>) content);
         }else {
-            setOnError(clazz.newInstance());
+            setOnError(type.newInstance());
         }
     }
 
     @Override
     public void start(Stage stage) throws Exception {
         checkSecondInit(mainStage);
-        try {
+        try {            
             mainStage = stage;
-            StageStyle style = manifest.getMainStageStyle();
+            StageStyle style = manifest.get(Manifest.MAIN_STAGE_STYLE);
             if(style != null) stage.initStyle(style);
             Scene scene = new Scene(content);
             stage.setScene(scene);
+            
+            ReadOnlyProperty<Image> icon = manifest.get(Manifest.APP_ICON_RESOURCE);
+            if(icon != null) {
+                stage.getIcons().add(0, icon.getValue());
+            }
+            ReadOnlyProperty<String> name = manifest.get(Manifest.APP_NAME_RESOURCE);
+            if(name != null) {
+                stage.titleProperty().bind(name);
+            }
             stage.show();
             
             resourceRegistrator = new ResourceRegistrator();
-        }catch(Throwable ex) {
-            LOG.log(Level.SEVERE, "Error: ", ex);
+        } catch(Throwable ex) {
+            LOG.log(Level.SEVERE, "Error in application start: ", ex);
         }
     }
 
@@ -157,7 +164,7 @@ public final class Application extends javafx.application.Application {
     }
 
     @Override
-    public void stop() {
+    public void stop() throws Exception {
         settings.flush();
         Platform.exit();
         System.exit(0);
@@ -196,7 +203,7 @@ public final class Application extends javafx.application.Application {
 
         private final UncaughtExceptionHandler exceptionHandler
                 = (thread, throwable) -> {
-                    ErrorEvent event = createEvent(thread, throwable, throwable);
+                    ErrorEvent event = ErrorEvent.create(thread, throwable);
                     execute(() -> get().handle(event));
                 };
 
@@ -205,18 +212,6 @@ public final class Application extends javafx.application.Application {
             super.set(newValue);
             Thread.setDefaultUncaughtExceptionHandler(
                     newValue != null ? exceptionHandler : null);
-        }
-
-        private ErrorEvent createEvent(Thread thread, Throwable cause, Throwable parentCause) {
-            if(cause instanceof ExceptionInInitializerError
-                    || cause instanceof RuntimeIOException) {
-                return createEvent(thread, cause.getCause(), parentCause);
-            }
-            if(cause instanceof RuntimeSQLException) {
-                SQLException sqlEx = Database.Utils.extractCause(cause);
-                if(sqlEx != null) return createEvent(thread, sqlEx, parentCause);
-            }
-            return new ErrorEvent(thread, cause, parentCause);
         }
 
     }

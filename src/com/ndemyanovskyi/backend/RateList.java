@@ -5,10 +5,10 @@
  */
 package com.ndemyanovskyi.backend;
 
+import com.ndemyanovskyi.backend.Rate.Field;
 import com.ndemyanovskyi.collection.list.DefaultList;
 import com.ndemyanovskyi.time.Interval;
 import com.ndemyanovskyi.time.Period;
-import com.ndemyanovskyi.backend.Rate.Field;
 import java.lang.reflect.Array;
 import java.time.LocalDate;
 import java.util.Collection;
@@ -24,12 +24,12 @@ import javafx.scene.chart.XYChart;
  *
  * @author Назарій
  */
-public interface RateList<R extends Rate> extends ObservableList<R> {
+public interface RateList<R extends Rate> extends ObservableList<R>, DefaultList<R> {
     
     public Period getPeriod();
     public Bank<R> getBank();
     public Currency getCurrency();
-    public RateList<R> subList(Interval period);
+    public RateList<R> subList(Interval interval);
     
     public default RateList<R> subList(Collection<LocalDate> dates) {
         return subList(Period.of(dates));

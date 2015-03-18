@@ -40,6 +40,7 @@
     <string name="sale">ПРОДАЖ</string>
     <string name="from">Від</string>
     <string name="continue">Продовжити</string>
+    <string name="settings">Налаштування</string>
     <string name="close_application">Закрити програму</string>
     <string name="error_db_alredy_loaded">Сталась помилка. База даних уже відкрита в іншій програмі.</string>
 </strings>

@@ -5,11 +5,6 @@
  */
 package com.ndemyanovskyi.backend.site;
 
-import com.ndemyanovskyi.collection.set.FilteredSet;
-import com.ndemyanovskyi.collection.set.unmodifiable.UnmodifiableSetWrapper;
-import com.ndemyanovskyi.map.HashPool;
-import com.ndemyanovskyi.map.Pool;
-import static com.ndemyanovskyi.util.DateTimeFormatters.format;
 import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.backend.Bank;
 import com.ndemyanovskyi.backend.CommercialBank;
@@ -17,6 +12,11 @@ import com.ndemyanovskyi.backend.Currency;
 import com.ndemyanovskyi.backend.ExchangeRate;
 import com.ndemyanovskyi.backend.NationalBank;
 import com.ndemyanovskyi.backend.Rate;
+import com.ndemyanovskyi.collection.set.FilteredSet;
+import com.ndemyanovskyi.collection.set.unmodifiable.UnmodifiableSetWrapper;
+import com.ndemyanovskyi.map.HashPool;
+import com.ndemyanovskyi.map.Pool;
+import static com.ndemyanovskyi.util.DateTimeFormatters.format;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -191,7 +191,7 @@ public abstract class Site {
 
 	    };
 
-    public static final InterbankSite<CommercialBank, ExchangeRate> SRAVNIBANK
+    /*public static final InterbankSite<CommercialBank, ExchangeRate> SRAVNIBANK
 	    = new InterbankSite<CommercialBank, ExchangeRate>("SRAVNIBANK", 2, "http://sravnibank.com.ua/", Bank.values(CommercialBank.class)) {
 
                 public static final String TEMPLATE_URL = 
@@ -323,7 +323,7 @@ public abstract class Site {
 		    return rates;
 		}
 
-	    };
+	    };*/
 
     private final String name;
     private final String mainUrl;

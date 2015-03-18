@@ -1,0 +1,15 @@
+.settings-button {
+    -fx-background-color: transparent;
+    -fx-graphic: url("./settings.png");
+    -fx-text-fill: gray;
+    -fx-font-size: 18pt;
+    -fx-graphic-text-gap: 10;
+}
+
+.settings-button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+}
+
+.settings-button:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+}

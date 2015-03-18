@@ -5,8 +5,12 @@
  */
 package com.ndemyanovskyi.ui.pane.main;
 
-import com.ndemyanovskyi.ui.pane.InitializableBorderPane;
+import com.ndemyanovskyi.backend.Bank;
+import com.ndemyanovskyi.backend.Currency;
+import com.ndemyanovskyi.backend.DataManager;
+import com.ndemyanovskyi.ui.pane.DelayedResizePane;
 import com.ndemyanovskyi.ui.pane.main.chart.ChartPane;
+import java.time.LocalDate;
 import javafx.fxml.FXML;
 import javafx.scene.input.MouseEvent;
 
@@ -15,11 +19,16 @@ import javafx.scene.input.MouseEvent;
  *
  * @author Назарій
  */
-public class MainPane extends InitializableBorderPane/* implements Initializable, EventHandler<ErrorEvent> */{
+public class MainPane extends DelayedResizePane/* implements Initializable, EventHandler<ErrorEvent> */{
     
     @FXML private ChartPane chartPane;
     
     public MainPane() {
+        long time = System.nanoTime();
+        boolean contains = DataManager.containsDate(Bank.NBU, Currency.EUR, LocalDate.now());
+        time = System.nanoTime() - time;
+        System.out.println("time = " + time + "; contains: " + contains);
+    
     }
     
 

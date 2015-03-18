@@ -6,9 +6,7 @@
 
 package com.ndemyanovskyi.ui.pane.main.chart.legend;
 
-import com.ndemyanovskyi.app.Application;
-import com.ndemyanovskyi.ui.anim.Animator;
-import com.ndemyanovskyi.ui.anim.FadeAnimator;
+import com.ndemyanovskyi.ui.anim.OpacityAnimator;
 import com.ndemyanovskyi.ui.pane.InitializableHBox;
 import com.ndemyanovskyi.ui.pane.main.chart.Intent;
 import java.net.URL;
@@ -30,7 +28,6 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.Line;
-import javafx.stage.Popup;
 import javafx.util.Duration;
 
 public final class Legend extends InitializableHBox {
@@ -66,12 +63,12 @@ public final class Legend extends InitializableHBox {
         });
         colorLine.endXProperty().bind(
                 Bindings.max(bankLabel.widthProperty(), bottomBox.widthProperty()));
-        Application.execute(() -> {
+        /*Application.execute(() -> {
             descriptionPopup = new Popup(); 
             HBox node = new InitializableHBox("LegendDescription.fxml");
             node.setMouseTransparent(true);
             descriptionPopup.getContent().add(node);
-        });
+        });*/
     }
 
     public Intent<?> getIntent() {
@@ -138,11 +135,11 @@ public final class Legend extends InitializableHBox {
 	}
     }
     
-    private final Animator closeButtonAnimator = 
-            new FadeAnimator(Duration.millis(200), closeButton);
-    private final Animator progressIndicatorAnimator = 
-            new FadeAnimator(Duration.millis(200), progressIndicator);
-    private Popup descriptionPopup;
+    private final OpacityAnimator closeButtonAnimator = 
+            new OpacityAnimator(Duration.millis(200), closeButton);
+    private final OpacityAnimator progressIndicatorAnimator = 
+            new OpacityAnimator(Duration.millis(200), progressIndicator);
+    //private Popup descriptionPopup;
     
     @FXML
     private void onMouseExited(MouseEvent e) { 
@@ -158,13 +155,13 @@ public final class Legend extends InitializableHBox {
     }
     
     private void showProgressIndicator() {
-        closeButtonAnimator.playDown();
-        progressIndicatorAnimator.playUp();
+        closeButtonAnimator.play(0.0d);
+        progressIndicatorAnimator.play(1.0d);
     }
     
     private void showCloseButton() {
-        closeButtonAnimator.playUp();
-        progressIndicatorAnimator.playDown();
+        closeButtonAnimator.play(1.0d);
+        progressIndicatorAnimator.play(0.0d);
     }
     
 }

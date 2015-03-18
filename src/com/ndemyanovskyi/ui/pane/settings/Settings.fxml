@@ -7,8 +7,7 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<AnchorPane id="AnchorPane" prefHeight="400.0" prefWidth="600.0" styleClass="mainFxmlClass" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.qguest.ui.scene.settings.SettingsController">
-    <stylesheets>
-        <URL value="@settings.css"/>
-    </stylesheets>
-</AnchorPane>
+
+<fx:root id="root" styleClass="mainFxmlClass" stylesheets="@settings.css" type="BorderPane" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/8" fx:controller="com.ndemyanovskyi.ui.pane.settings.Settings">
+    
+</fx:root>

@@ -1,10 +1,10 @@
 package com.ndemyanovskyi.app;
 
+import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMap;
 import com.ndemyanovskyi.throwable.Exceptions;
 import com.ndemyanovskyi.util.BiConverter;
 import com.ndemyanovskyi.util.Converter;
-import com.ndemyanovskyi.app.localization.Language;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.Flushable;
@@ -43,10 +43,10 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
     private static final Settings INSTANCE = new Settings("settings.xml");
 
     public static final Setting<Language> LANGUAGE = new Setting<>(
-            INSTANCE, "LANGUAGE", Language.getDefault(), Language::valueOfTag, Language::tag);
+            INSTANCE, "language", Language.getDefault(), Language::valueOfTag, Language::tag);
 
     public static final Setting<Integer> STORED_DATA_YEARS_COUNT = new Setting<>(
-	    INSTANCE, "STORED_DATA_YEARS_COUNT", 1, Integer::parseInt, (Integer i) -> i >= 1);
+	    INSTANCE, "stored_data_years_count", 1, Integer::parseInt, (Integer i) -> i >= 1);
 
     static {
 	getInstance().read();
@@ -105,7 +105,9 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
 		    String name = node.getAttributes().
 			    getNamedItem("name").getTextContent();
 
-		    get(name).set(node.getTextContent());
+                    if(containsKey(name)) {
+                        get(name).set(node.getTextContent());
+                    }
 		}
 	    } catch(IOException | ParserConfigurationException | SAXException ex) {
 		LOG.log(Level.WARNING, "Error reading settings file", ex);
@@ -123,7 +125,7 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
 		    "Key must be instance of String.");
 	}
 
-	Setting<?> value = super.get(key.toString().toUpperCase());
+	Setting<?> value = super.get(key.toString());
 	if(value == null) {
 	    throw new IllegalArgumentException(
 		    "Key '" + key + "' not defined in settings.");
@@ -231,7 +233,6 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
 		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
 		transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-
 		transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
 	    });
 	    start();
@@ -276,7 +277,6 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
 
 	private DOMSource build() {
 	    building = true;
-	    
 	    Document doc = documentBuilder.newDocument();
 	    Element root = doc.createElement(ROOT_TAG);
 	    for(Setting<?> s : values()) {
@@ -287,7 +287,6 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
 	    }
 	    doc.appendChild(root);
 	    DOMSource ds = new DOMSource(doc);
-	    
 	    building = false;
 	    return ds;
 	}
@@ -297,6 +296,10 @@ public final class Settings extends UnmodifiableMap<String, Settings.Setting<?>>
 		writing = true;
                 
                 try (FileOutputStream fos = new FileOutputStream(getTempFile())) {
+                    transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+                    transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+                    transformer.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                    transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
                     transformer.transform(build(), new StreamResult(fos));
                     transformer.reset();
                 }

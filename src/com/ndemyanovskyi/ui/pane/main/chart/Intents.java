@@ -23,7 +23,16 @@ import javafx.beans.property.ReadOnlyProperty;
 public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
 
     public static final Comparator<Intent<?>> COMPARATOR = 
-            (a, b) -> a.getInstant().compareTo(b.getInstant());
+            (a, b) -> {
+                int res = a.getInstant().compareTo(b.getInstant());
+                if(res != 0) return res;
+                res = a.getBank().getName().compareTo(b.getBank().getName());
+                if(res != 0) return res;
+                res = a.getCurrency().compareTo(b.getCurrency());
+                if(res != 0) return res;
+                res = a.getField().compareTo(b.getField());
+                return res;
+            };
     
     private final ReadOnlyProperty<Number> maxSeriesCount = 
             ResourceBindings.numbers().get("max_series_count");

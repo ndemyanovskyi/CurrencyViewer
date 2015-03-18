@@ -6,17 +6,17 @@
 
 package com.ndemyanovskyi.backend;
 
-import com.ndemyanovskyi.collection.Collections;
-import com.ndemyanovskyi.collection.set.unmodifiable.UnmodifiableSetWrapper;
-import com.ndemyanovskyi.map.HashPool;
-import com.ndemyanovskyi.map.Pool;
 import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.res.Resources;
 import com.ndemyanovskyi.backend.Rate.Field;
 import com.ndemyanovskyi.backend.site.BankSite;
 import com.ndemyanovskyi.backend.site.Site;
+import com.ndemyanovskyi.collection.Collections;
+import com.ndemyanovskyi.collection.set.unmodifiable.UnmodifiableSetWrapper;
 import com.ndemyanovskyi.derby.Row;
+import com.ndemyanovskyi.map.HashPool;
+import com.ndemyanovskyi.map.Pool;
 import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Objects;
@@ -56,7 +56,7 @@ public abstract class Bank<R extends Rate> {
     private final Set<Currency> currencySet;
     private final Set<Field> fieldSet;
     private final BankSite<? extends Bank, R> site;
-    private final DatabaseManager<R> databaseManager;
+    private final DatabaseHelper<R> databaseHelper;
     
     private final ReadOnlyProperty<String> displayNameProperty;
     
@@ -72,14 +72,14 @@ public abstract class Bank<R extends Rate> {
         return Resources.strings(language).get(RESOURCE_PREFIX + getName());
     }
     
-    Bank(String tag, Set<Currency> currencySet, Set<Field> fieldSet, BankSite<? extends Bank, R> site, DatabaseManager<R> databaseManager) {
+    Bank(String tag, Set<Currency> currencySet, Set<Field> fieldSet, BankSite<? extends Bank, R> site, DatabaseHelper<R> databaseHelper) {
 	this.name = Objects.requireNonNull(tag, "tag");
 	this.site = site;
 	this.currencySet = Collections.requireNonEmpty(
 		Objects.requireNonNull(currencySet, "currencySet"), "currencySet is empty");
 	this.fieldSet = Collections.requireNonEmpty(
 		Objects.requireNonNull(fieldSet, "fieldSet"), "fieldSet is empty");
-	this.databaseManager = Objects.requireNonNull(databaseManager, "databaseManager");
+	this.databaseHelper = Objects.requireNonNull(databaseHelper, "databaseHelper");
         this.displayNameProperty = ResourceBindings.strings().get(RESOURCE_PREFIX + name);
         
 	if(getByName(tag) != null) {
@@ -90,8 +90,8 @@ public abstract class Bank<R extends Rate> {
 	addIntoValues(this);
     }
     
-    Bank(String tag, Set<Currency> currencySet, Set<Field> fieldSet, DatabaseManager<R> databaseManager) {
-	this(tag, currencySet, fieldSet, null, databaseManager);
+    Bank(String tag, Set<Currency> currencySet, Set<Field> fieldSet, DatabaseHelper<R> databaseHelper) {
+	this(tag, currencySet, fieldSet, null, databaseHelper);
     }
     
     public abstract Class<R> getRateType();
@@ -129,8 +129,8 @@ public abstract class Bank<R extends Rate> {
     
     //abstract Map<Currency, R> loadRates(LocalDate date) throws IOException;
 
-    DatabaseManager<R> getDatabaseManager() {
-	return databaseManager;
+    DatabaseHelper<R> getDatabaseHelper() {
+	return databaseHelper;
     }
 
     public Set<Field> getFields() {
@@ -190,10 +190,11 @@ public abstract class Bank<R extends Rate> {
 	return getName();
     }
     
-    static interface DatabaseManager<R extends Rate> {
+    interface DatabaseHelper<R extends Rate> {
 	
         public R getRate(Bank<R> bank, Currency currency, Row row);
 	public String getLayout(Bank<R> bank, Currency currency);
+	public String getInsertSql(String table, R rate);
 	public String getUpdateSql(String table, R rate);
 	
     }

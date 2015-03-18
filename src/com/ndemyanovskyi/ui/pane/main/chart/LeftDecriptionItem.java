@@ -5,7 +5,6 @@
  */
 package com.ndemyanovskyi.ui.pane.main.chart;
 
-import com.ndemyanovskyi.backend.Rate;
 import com.ndemyanovskyi.ui.pane.InitializableVBox;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -22,17 +21,17 @@ import javafx.scene.shape.Line;
  *
  * @author Назарій
  */
-public class LeftDecriptionItem<R extends Rate> extends InitializableVBox {
+public class LeftDecriptionItem extends InitializableVBox {
     
     @FXML private Label labelBank;
     @FXML private HBox bottomBox;
     @FXML private Line colorLine;
     
-    private ObjectProperty<Intent<R>> intent;
+    private ObjectProperty<Intent<?>> intent;
     
     public LeftDecriptionItem() {}
     
-    public LeftDecriptionItem(Intent<R> intent) {
+    public LeftDecriptionItem(Intent<?> intent) {
         setIntent(intent);
     }
 
@@ -42,19 +41,19 @@ public class LeftDecriptionItem<R extends Rate> extends InitializableVBox {
                 Bindings.max(labelBank.widthProperty(), bottomBox.widthProperty()));
     }
     
-    public LeftDecriptionItem(ObservableValue<Intent<R>> intent) {
+    public LeftDecriptionItem(ObservableValue<Intent<?>> intent) {
         intentProperty().bind(intent);
     }
     
-    public Intent<R> getIntent() {
+    public Intent<?> getIntent() {
         return intentProperty().get();
     }
 
-    private void setIntent(Intent<R> intent) {
+    private void setIntent(Intent<?> intent) {
         intentProperty().set(intent);
     }
     
-    public ObjectProperty<Intent<R>> intentProperty() {
+    public ObjectProperty<Intent<?>> intentProperty() {
         return intent != null ? intent : 
                 (intent = new SimpleObjectProperty<>(this, "intent"));
     }

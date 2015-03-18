@@ -38,7 +38,7 @@ public class Intent<R extends Rate> {
     }
 
     public Intent(Bank<R> bank, Currency currency, Field field) {
-        this(bank, currency, Field.RATE, randomColor());
+        this(bank, currency, field, randomColor());
     }
     
     public Intent(Bank<R> bank, Currency currency, Field field, Color color) {

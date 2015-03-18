@@ -5,12 +5,13 @@
  */
 package com.ndemyanovskyi.ui.anim;
 
-import java.util.Collection;
-import java.util.Set;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import java.util.function.Predicate;
+import javafx.animation.Transition;
+import javafx.beans.property.ReadOnlyListProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlySetProperty;
+import javafx.collections.ObservableList;
+import javafx.collections.ObservableSet;
 import javafx.scene.Node;
 import javafx.util.Duration;
 
@@ -18,52 +19,50 @@ import javafx.util.Duration;
  *
  * @author Назарій
  */
-public abstract class Animator {
+public interface Animator<S extends Animator.State> {
     
-    private Animator owner;
+    public void play(S state);
+    public void stop();
     
-    private ObjectProperty<EventHandler<? super ActionEvent>> onDownFinished;
-    private ObjectProperty<EventHandler<? super ActionEvent>> onUpFinished;
-    
-    public ObjectProperty<EventHandler<? super ActionEvent>> onDownFinishedProperty() {
-        return onDownFinished != null ? onDownFinished : 
-                (onDownFinished = new SimpleObjectProperty<>());
+    public default void play(int index) {
+        play(getStates().get(index));
     }
     
-    public ObjectProperty<EventHandler<? super ActionEvent>> onUpFinishedProperty() {
-        Node d;
-        return onUpFinished != null ? onUpFinished : 
-                (onUpFinished = new SimpleObjectProperty<>());
-    }
-
-    public void setOnDownFinished(EventHandler<? super ActionEvent> onDownFinished) {
-        onDownFinishedProperty().set(onDownFinished);
-    }
-
-    public EventHandler<? super ActionEvent> getOnDownFinished() {
-        return onDownFinished != null ? onDownFinished.get() : null;
-    }
-
-    public void setOnUpFinished(EventHandler<? super ActionEvent> onUpFinished) {
-        onUpFinishedProperty().set(onUpFinished);
-    }
-
-    public EventHandler<? super ActionEvent> getOnUpFinished() {
-        return onUpFinished != null ? onUpFinished.get() : null;
+    public default void replay() {
+        S state = getCurrentState();
+        if(state == null) {
+            throw new IllegalStateException(
+                    "Animator do not already played or stoped.");
+        }
+        play(state);
     }
     
-    public abstract void playUp();
-    public abstract void playDown();
-    
-    public abstract Duration getDuration();
-    public abstract Set<Node> getNodes();
-    
-    public static AnimatorGroup group(Animator... animators) {
-        return new AnimatorGroup(animators);
+    public default Duration getDuration() {
+        return durationProperty().get();
     }
     
-    public static AnimatorGroup group(Collection<Animator> animators) {
-        return new AnimatorGroup(animators);
+    public default ObservableSet<Node> getNodes() {
+        return nodesProperty().get();
+    }
+    
+    public default ObservableList<S> getStates() {
+        return statesProperty().get();
+    }
+    
+    public default S getCurrentState() {
+        return currentStateProperty().get();
+    }
+    
+    public ReadOnlyObjectProperty<Duration> durationProperty();
+    public ReadOnlySetProperty<Node> nodesProperty();
+    public ReadOnlyObjectProperty<S> currentStateProperty();
+    public ReadOnlyListProperty<S> statesProperty();
+    
+    public interface State<T extends Transition> extends Predicate<Node> {
+    
+        public Duration getDuration();
+        public T init(Node node, T transition);
+        
     }
     
 }

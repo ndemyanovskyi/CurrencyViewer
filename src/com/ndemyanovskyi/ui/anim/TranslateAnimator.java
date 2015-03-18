@@ -5,9 +5,11 @@
  */
 package com.ndemyanovskyi.ui.anim;
 
-import java.util.Arrays;
-import java.util.Collection;
+import static com.ndemyanovskyi.ui.anim.AbstractAnimator.DEFAULT_DURATION;
+import java.util.Objects;
 import javafx.animation.TranslateTransition;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
 import javafx.scene.Node;
 import javafx.util.Duration;
 
@@ -15,175 +17,220 @@ import javafx.util.Duration;
  *
  * @author Назарій
  */
-public class TranslateAnimator extends AbstractAnimator<TranslateTransition> {
+public class TranslateAnimator extends AbstractAnimator<TranslateTransition, TranslateAnimator.Translate> {
     
-    private final double downX, upX, downY, upY, downZ, upZ;
-    
-    public TranslateAnimator(double downX, double upX, double downY, double upY, double downZ, double upZ, Collection<Node> nodes) {
-        this(DEFAULT_DURATION, downX, upX, downY, upY, downZ, upZ, nodes);
+    public TranslateAnimator(ObservableSet<Node> nodes) {
+        this(DEFAULT_DURATION, nodes);
     } 
     
-    public TranslateAnimator(double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        this(downX, upX, downY, upY, downZ, upZ, Arrays.asList(nodes));
+    public TranslateAnimator(Node... nodes) {
+        this(FXCollections.observableSet(nodes));
     } 
     
-    public TranslateAnimator(Duration duration, double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        this(duration, downX, upX, downY, upY, downZ, upZ, Arrays.asList(nodes));
+    public TranslateAnimator(Duration duration, Node... nodes) {
+        this(duration, FXCollections.observableSet(nodes));
     } 
     
-    public TranslateAnimator(Duration duration, double downX, double upX, double downY, double upY, double downZ, double upZ, Collection<Node> nodes) {
+    public TranslateAnimator(Duration duration, ObservableSet<Node> nodes) {
         super(duration, nodes);
-        this.downX = downX;
-        this.downY = downY;
-        this.downZ = downZ;
-        this.upX = upX;
-        this.upY = upY;
-        this.upZ = upZ;
     } 
-    
-    public static TranslateAnimator ofX(double downX, double upX, Node... nodes) {
-        return new TranslateAnimator(downX, upX, 0, 0, 0, 0, nodes);
-    }
-    
-    public static TranslateAnimator ofY(double downY, double upY, Node... nodes) {
-        return new TranslateAnimator(0, 0, downY, upY, 0, 0, nodes);
-    }
-    
-    public static TranslateAnimator ofZ(double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(0, 0, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofXZ(double downX, double upX, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(downX, upX, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofXY( double downX, double upX, double downY, double upY, Node... nodes) {
-        return new TranslateAnimator(downX, upX, downY, upY, 0, 0, nodes);
-    }
-    
-    public static TranslateAnimator ofYZ(double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(0, 0, downY, upY, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofXYZ(double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(downX, upX, downY, upY, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofX(Duration duration, double downX, double upX, Node... nodes) {
-        return new TranslateAnimator(duration, downX, upX, 0, 0, 0, 0, nodes);
-    }
-    
-    public static TranslateAnimator ofY(Duration duration, double downY, double upY, Node... nodes) {
-        return new TranslateAnimator(duration, 0, 0, downY, upY, 0, 0, nodes);
-    }
-    
-    public static TranslateAnimator ofZ(Duration duration, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(duration, 0, 0, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofXZ(Duration duration, double downX, double upX, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(duration, downX, upX, 0, 0, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofXY(Duration duration, double downX, double upX, double downY, double upY, Node... nodes) {
-        return new TranslateAnimator(duration, downX, upX, downY, upY, 0, 0, nodes);
-    }
-    
-    public static TranslateAnimator ofYZ(Duration duration, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(duration, 0, 0, downY, upY, downZ, upZ, nodes);
-    }
-    
-    public static TranslateAnimator ofXYZ(Duration duration, double downX, double upX, double downY, double upY, double downZ, double upZ, Node... nodes) {
-        return new TranslateAnimator(duration, downX, upX, downY, upY, downZ, upZ, nodes);
+
+    @Override
+    protected TranslateTransition initTransition(Node node, TranslateTransition transition, Translate state) {
+        transition = state.init(node, transition);
+        if(transition.getDuration().isUnknown()) {
+            transition.setDuration(getDuration());
+        }
+        return transition;
     }
 
-    public double getDownX() {
-        return downX;
-    }
-
-    public double getUpX() {
-        return upX;
-    }
-
-    public double getDownY() {
-        return downY;
-    }
-
-    public double getUpY() {
-        return upY;
-    }
-
-    public double getDownZ() {
-        return downZ;
-    }
-
-    public double getUpZ() {
-        return upZ;
-    }
-    
-    private double getProgress(Node node) {
-        double x = Math.abs((node.getTranslateX() - downX) / (upX - downX));
-        double y = Math.abs((node.getTranslateY() - downY) / (upY - downY));
-        double z = Math.abs((node.getTranslateZ() - downZ) / (upZ - downZ));
-        
-        double[] arr = {x, y, z};
-        double sum = 0;
-        int count = 0;
-        for(double d : arr) {
-            if(d > 0 && Double.isFinite(d)) {
-                sum += d;
-                count++;
+    public void play(double x, double y, double z) {
+        Translate scale = null;
+        for(Translate o : getStates()) {
+            if(o.is(x, y, z)) {
+                scale = o;
+                break;
             }
         }
-        double res = sum / count;
-        return Double.isFinite(res) ? res : 0;
+        if(scale == null) {
+            scale = new Translate(x, y, z);
+        }
+        play(scale);
     }
 
-    @Override
-    protected Duration getDownOffset(Node node) {
-        return getDuration().multiply(1- getProgress(node));
+    public void playX(double x) {
+        play(x, 0, 0);
     }
 
-    @Override
-    protected Duration getUpOffset(Node node) {
-        return getDuration().multiply(getProgress(node));
+    public void playY(double y) {
+        play(0, y, 0);
+    }
+
+    public void playZ(double z) {
+        play(0, 0, z);
+    }
+
+    public void playXZ(double x, double z) {
+        play(x, 0, z);
+    }
+
+    public void playYZ(double y, double z) {
+        play(0, y, z);
+    }
+
+    public void playXYZ(double value) {
+        play(value, value, value);
+    }
+
+    public void playXY(double x, double y) {
+        play(x, y, 0);
     }
     
-    @Override
-    protected TranslateTransition initUpTransition(Node node, TranslateTransition transition) {
-        if(transition == null) {
-            transition = new TranslateTransition();
+    public static final class Translate implements Animator.State<TranslateTransition> {
+
+        private final double x, y, z;
+        private final Duration duration;
+
+        public Translate(double x, double y, double z) {
+            this(Duration.UNKNOWN, x, y, z);
+        }
+
+        public Translate(Duration duration, double x, double y, double z) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.duration = duration;
         }
         
-        transition.setFromX(downX);
-        transition.setFromY(downY);
-        transition.setFromZ(downZ);
-        transition.setToX(upX);
-        transition.setToY(upY);
-        transition.setToZ(upZ);
-        transition.setDuration(getDuration());
-        transition.setNode(node);
-        
-        return transition;
-    }
-
-    @Override
-    protected TranslateTransition initDownTransition(Node node, TranslateTransition transition) {
-        if(transition == null) {
-            transition = new TranslateTransition();
+        //<editor-fold defaultstate="collapsed" desc="Static initializers">
+        public static Translate x(double x) {
+            return xyz(x, 0, 0);
         }
         
-        transition.setFromX(upX);
-        transition.setFromY(upY);
-        transition.setFromZ(upZ);
-        transition.setToX(downX);
-        transition.setToY(downY);
-        transition.setToZ(downZ);
-        transition.setDuration(getDuration());
-        transition.setNode(node);
+        public static Translate y(double y) {
+            return xyz(0, y, 0);
+        }
         
-        return transition;
+        public static Translate z(double z) {
+            return xyz(0, 0, z);
+        }
+        
+        public static Translate xy(double x, double y) {
+            return xyz(x, y, 0);
+        }
+        
+        public static Translate xz(double x, double z) {
+            return xyz(x, 0, z);
+        }
+        
+        public static Translate yz(double y, double z) {
+            return xyz(0, y, z);
+        }
+        
+        public static Translate xyz(double x, double y, double z) {
+            return new Translate(x, y, z);
+        }
+        
+        public static Translate xyz(double value) {
+            return xyz(value, value, value);
+        }
+        
+        public static Translate x(Duration duration, double x) {
+            return xyz(duration, x, 0, 0);
+        }
+        
+        public static Translate y(Duration duration, double y) {
+            return xyz(duration, 0, y, 0);
+        }
+        
+        public static Translate z(Duration duration, double z) {
+            return xyz(duration, 0, 0, z);
+        }
+        
+        public static Translate xy(Duration duration, double x, double y) {
+            return xyz(duration, x, y, 0);
+        }
+        
+        public static Translate xz(Duration duration, double x, double z) {
+            return xyz(duration, x, 0, z);
+        }
+        
+        public static Translate yz(Duration duration, double y, double z) {
+            return xyz(duration, 0, y, z);
+        }
+        
+        public static Translate xyz(Duration duration, double x, double y, double z) {
+            return new Translate(duration, x, y, z);
+        }
+        
+        public static Translate xyz(Duration duration, double value) {
+            return xyz(duration, value, value, value);
+        }
+        //</editor-fold>
+
+        @Override
+        public Duration getDuration() {
+            return duration;
+        }
+
+        public double getX() {
+            return x;
+        }
+
+        public double getZ() {
+            return z;
+        }
+
+        public double getY() {
+            return y;
+        }
+        
+        public boolean is(double x, double y, double z) {
+            return getX() == x && getY() == y && getZ() == z;
+        }
+
+        @Override
+        public TranslateTransition init(Node node, TranslateTransition transition) {
+            if(transition == null) {
+                transition = new TranslateTransition();
+            }
+
+            transition.setDuration(getDuration());
+            transition.setFromX(node.getTranslateX());
+            transition.setFromY(node.getTranslateY());
+            transition.setFromZ(node.getTranslateZ());
+            transition.setToX(getX());
+            transition.setToY(getY());
+            transition.setToZ(getZ());
+            transition.setNode(node);
+
+            return transition;
+        }
+        
+        @Override
+        public boolean test(Node node) {
+            return is(node.getTranslateX(), node.getTranslateY(), node.getTranslateZ());
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 7;
+            hash = 89 * hash + (int) (Double.doubleToLongBits(this.x) ^ (Double.doubleToLongBits(this.x) >>> 32));
+            hash = 89 * hash + (int) (Double.doubleToLongBits(this.y) ^ (Double.doubleToLongBits(this.y) >>> 32));
+            hash = 89 * hash + (int) (Double.doubleToLongBits(this.z) ^ (Double.doubleToLongBits(this.z) >>> 32));
+            hash = 89 * hash + Objects.hashCode(this.duration);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(o == this) return true;
+            if(o == null) return false;
+            if(!(o instanceof Translate)) return false;
+            
+            Translate other = (Translate) o;
+            return is(other.getX(), other.getY(), other.getZ());
+        }
+
     }
-    
-    
 }

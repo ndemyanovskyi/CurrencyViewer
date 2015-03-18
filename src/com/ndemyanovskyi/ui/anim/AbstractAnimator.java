@@ -5,15 +5,24 @@
  */
 package com.ndemyanovskyi.ui.anim;
 
-import com.ndemyanovskyi.util.Pair;
-import com.ndemyanovskyi.util.Unmodifiable;
-import java.util.Collection;
+import com.ndemyanovskyi.collection.set.ArrayListedSet;
+import com.ndemyanovskyi.ui.anim.Animator.State;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
-import javafx.animation.Animation;
 import javafx.animation.Transition;
+import javafx.beans.property.ListProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SetProperty;
+import javafx.beans.property.SimpleListProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleSetProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableSet;
+import javafx.collections.SetChangeListener.Change;
 import javafx.scene.Node;
 import javafx.util.Duration;
 
@@ -21,92 +30,104 @@ import javafx.util.Duration;
  *
  * @author Назарій
  */
-public abstract class AbstractAnimator<T extends Transition> extends Animator {
+public abstract class AbstractAnimator<T extends Transition, S extends State> implements Animator<S> {
     
     protected static final Duration DEFAULT_DURATION = Duration.millis(400);
     
-    private final Map<Node, Pair<T, T>> pairs = new HashMap<>();
-    private final Duration duration;
-    private Set<Node> nodeSet;
+    private final Map<Node, T> transitions = new HashMap<>();
     
-    public AbstractAnimator(Collection<? extends Node> nodes) {
+    private final ListProperty<S> states = new SimpleListProperty<>(this, "states", FXCollections.observableList(new ArrayListedSet<>()));
+    private final ObjectProperty<Duration> duration = new SimpleObjectProperty<>(this, "duration", DEFAULT_DURATION);
+    private final ReadOnlyObjectWrapper<S> currentState = new ReadOnlyObjectWrapper<>(this, "currentState");
+    private final SetProperty<Node> nodes;
+    
+    public AbstractAnimator(ObservableSet<Node> nodes) {
         this(DEFAULT_DURATION, nodes);
     }  
     
-    public AbstractAnimator(Duration duration, Collection<? extends Node> nodes) {  
-        this.duration = Objects.requireNonNull(duration, "duration");
-        nodes.forEach(n -> this.pairs.put(n, null));
+    public AbstractAnimator(Duration duration, ObservableSet<Node> nodes) {  
+        this.nodes = new SimpleSetProperty<>(this, "nodes", nodes);
+        
+        this.nodes.addListener((Change<? extends Node> c) -> stop());
+        this.nodes.addListener((property, oldSet, newSet) -> {
+            if(oldSet != null) {
+                oldSet.forEach(transitions::remove);
+            }
+        });
+        
+        setDuration(duration);
+        this.duration.addListener(p -> stop());
     } 
     
-    protected abstract T initUpTransition(Node node, T transition);
-    protected abstract T initDownTransition(Node node, T transition);
-
-    @Override
-    public Set<Node> getNodes() {
-        return nodeSet != null ? nodeSet : 
-                (nodeSet = Unmodifiable.set(pairs.keySet()));
+    public final void setDuration(Duration duration) {
+        durationProperty().set(duration);
+    }
+    
+    public final void setNodes(ObservableSet<Node> nodes) {
+        nodesProperty().set(nodes);
     }
 
     @Override
-    public Duration getDuration() {
+    public final ObjectProperty<Duration> durationProperty() {
         return duration;
     }
-    
-    protected T getUpTransition(Node node) {
-        Pair<T, T> pair = pairs.get(node);
-        if(pair == null) {
-            pair = new Pair<>(initUpTransition(node, null), null);
-            pairs.put(node, pair);
-        } 
-        if(pair.getFirst()== null) {
-            pair.setFirst(initUpTransition(node, null));
-        }
-        return pair.getFirst();
+
+    @Override
+    public final SetProperty<Node> nodesProperty() {
+        return nodes;
     }
     
-    protected T getDownTransition(Node node) {
-        Pair<T, T> pair = pairs.get(node);
-        if(pair == null) {
-            pair = new Pair<>();
-            pairs.put(node, pair);
-        } 
-        if(pair.getSecond() == null) {
-            pair.setSecond(initDownTransition(node, null));
+    protected abstract T initTransition(Node node, T transition, S state);
+    
+    private T getTransition(Node node, S state) {
+        T transition = transitions.get(node);
+        if(transition == null) {
+            transition = initTransition(node, null, state);
+            transitions.put(node, transition);
+            return transition;
+        } else {
+            transition.pause();
+            return initTransition(node, transition, state);
         }
-        return pair.getSecond();
     }
 
     @Override
-    public void playUp() {
-        for(Node node : getNodes()) {
-            T up = getUpTransition(node);
-            T down = getDownTransition(node);
-            Duration offset = getUpOffset(node);
-            if(up.getStatus() != Animation.Status.RUNNING && offset.lessThan(getDuration())) {
-                down.pause();
-                up = initUpTransition(node, up);
-                pairs.get(node).setFirst(up);
-                up.playFrom(offset);
+    public void play(S state) {
+        Objects.requireNonNull(state, "state");
+        if(!state.equals(getCurrentState())) {
+            List<S> states = getStates();
+            if(!states.contains(state)) {
+                states.add(state);
+            }
+            setCurrentState(state);
+            for(Node node : getNodes()) {
+                T transition = getTransition(node, state);
+                transition.playFromStart();
             }
         }
     }
 
     @Override
-    public void playDown() {
+    public void stop() {
+        setCurrentState(null);
         for(Node node : getNodes()) {
-            T up = getUpTransition(node);
-            T down = getDownTransition(node);
-            Duration offset = getDownOffset(node);
-            if(down.getStatus() != Animation.Status.RUNNING && offset.lessThan(getDuration())) {
-                up.pause();
-                down = initDownTransition(node, down);
-                pairs.get(node).setSecond(down);
-                down.playFrom(offset);
-            }
+            T transition = transitions.get(node);
+            if(transition != null) transition.stop();
         }
     }
     
-    protected abstract Duration getDownOffset(Node node);
-    protected abstract Duration getUpOffset(Node node);
+    private void setCurrentState(S state) {
+        currentState.set(state);
+    }
+
+    @Override
+    public final ReadOnlyObjectProperty<S> currentStateProperty() {
+        return currentState.getReadOnlyProperty();
+    }
+
+    @Override
+    public final ListProperty<S> statesProperty() {
+        return states;
+    }
     
 }

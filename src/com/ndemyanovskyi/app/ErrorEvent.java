@@ -5,6 +5,10 @@
  */
 package com.ndemyanovskyi.app;
 
+import com.ndemyanovskyi.derby.Database;
+import com.ndemyanovskyi.throwable.RuntimeIOException;
+import com.ndemyanovskyi.throwable.RuntimeSQLException;
+import java.sql.SQLException;
 import java.util.Objects;
 import javafx.event.Event;
 
@@ -68,6 +72,26 @@ public final class ErrorEvent extends Event {
     public String toString() {
         return "ErrorEvent [" + "parentCause=" + parentCause + 
                 ", cause=" + cause + ", source=" + getSource() + ']';
+    }
+    
+    public static ErrorEvent create(Throwable cause) {
+        return create(Thread.currentThread(), cause, cause);
+    }
+    
+    public static ErrorEvent create(Thread thread, Throwable cause) {
+        return create(thread, cause, cause);
+    }
+    
+    private static ErrorEvent create(Thread thread, Throwable cause, Throwable parentCause) {
+        if(cause instanceof ExceptionInInitializerError
+                || cause instanceof RuntimeIOException) {
+            return create(thread, cause.getCause(), parentCause);
+        }
+        if(cause instanceof RuntimeSQLException) {
+            SQLException sqlEx = Database.Utils.extractCause(cause);
+            if(sqlEx != null) return create(thread, sqlEx, parentCause);
+        }
+        return new ErrorEvent(thread, cause, parentCause);
     }
     
 }

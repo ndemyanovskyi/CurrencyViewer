@@ -5,10 +5,6 @@
  */
 package com.ndemyanovskyi.backend;
 
-import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMapWrapper;
-import com.ndemyanovskyi.throwable.Exceptions;
-import com.ndemyanovskyi.throwable.RuntimeSQLException;
-import static com.ndemyanovskyi.util.Compare.greaterOrEquals;
 import com.ndemyanovskyi.app.Settings;
 import com.ndemyanovskyi.backend.loader.SimpleLoader;
 import com.ndemyanovskyi.backend.loader.SimpleSubscribedLoader;
@@ -19,9 +15,15 @@ import com.ndemyanovskyi.derby.Cursor;
 import com.ndemyanovskyi.derby.Database;
 import com.ndemyanovskyi.derby.Derby;
 import com.ndemyanovskyi.derby.Row;
+import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMapWrapper;
+import com.ndemyanovskyi.throwable.Exceptions;
+import com.ndemyanovskyi.throwable.RuntimeSQLException;
+import static com.ndemyanovskyi.util.Compare.greaterOrEquals;
+import static com.ndemyanovskyi.util.DateTimeFormatters.of;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -75,13 +77,6 @@ public final class DataManager {
                 (database = Derby.connect("assets/db/currency_rates"));
     }
     
-    private static <R extends Rate> void createTable(Bank<R> bank, Currency currency) {
-        try {
-            getDatabase().queryUpdate(String.format("CREATE TABLE %s (%s)",
-                    getTableName(bank, currency), bank.getDatabaseManager().getLayout(bank, currency)));
-        } catch(RuntimeSQLException ex) {}
-    }
-    
     public static <R extends Rate> Cursor getTable(Bank<R> bank, Currency currency) {
         return DataManager.getTable(bank, currency, Cursor.Type.FORWARD_ONLY, Cursor.Concurrency.READ_ONLY);
     }
@@ -104,20 +99,36 @@ public final class DataManager {
     }
     
     @SuppressWarnings("unchecked")
-    public static <R extends Rate> void writeRate(R rate) {
+    public static <R extends Rate> void writeRate(R rate, boolean updateIfExists) {
         Bank<R> bank = (Bank<R>) rate.getBank();
         String table = getTableName(bank, rate.getCurrency());
         try {
-            getDatabase().queryUpdate(bank.getDatabaseManager().getUpdateSql(table, rate));
+            getDatabase().queryUpdate(bank.getDatabaseHelper().getInsertSql(table, rate));
         } catch(RuntimeSQLException ex) {
             SQLException sqlCause = Database.Utils.extractCause(ex);
             
-            //If table does not exists.
-            if(sqlCause.getSQLState().equals("42X05")) { 
-                createTable(bank, rate.getCurrency());
-                writeRate(rate);
+            switch(sqlCause.getSQLState()) {
+                case "23505": //Duplicate value
+                    if(updateIfExists) {
+                        getDatabase().queryUpdate(
+                                bank.getDatabaseHelper().getUpdateSql(table, rate));
+                    }
+                    break;
+                    
+                case "42X05": //Table does not exists
+                    createTable(bank, rate.getCurrency());
+                    writeRate(rate, updateIfExists);
+                    break;
+                    
             }
         }
+    }
+    
+    private static <R extends Rate> void createTable(Bank<R> bank, Currency currency) {
+        try {
+            getDatabase().queryUpdate(String.format("CREATE TABLE %s (%s)",
+                    getTableName(bank, currency), bank.getDatabaseHelper().getLayout(bank, currency)));
+        } catch(RuntimeSQLException ex) {}
     }
     
     static <R extends Rate> LocalDate firstDate(Bank<R> bank, Currency currency) {
@@ -259,7 +270,7 @@ public final class DataManager {
                             list.modifier().addOrThrow(e.getValue());
                         }
                     }
-                    writeRate(e.getValue());
+                    writeRate(e.getValue(), false);
                 }
             }
             return rates;
@@ -321,7 +332,7 @@ public final class DataManager {
                             if(list != null) {
                                 list.modifier().add((R) e.getValue());
                             }
-                            writeRate((R) e.getValue());
+                            writeRate((R) e.getValue(), false);
                             
                             if(!e.getValue().isNaN() || sites.isEmpty()) {
                                 getSubscribedLocks().removeIf(lock -> lock.is(e.getKey()));
@@ -404,7 +415,7 @@ public final class DataManager {
             if(list == null) {
                 List<R> rates = new ArrayList<>();
                 for(Row row : getTable(bank, currency)) {
-                    rates.add(bank.getDatabaseManager().getRate(bank, currency, row));
+                    rates.add(bank.getDatabaseHelper().getRate(bank, currency, row));
                 }
                 list = new RateListImpl<>(bank, currency, rates);
                 CACHE.add(list);
@@ -422,6 +433,57 @@ public final class DataManager {
             return Exceptions.execute(super::sync);
         }
         
+    }
+      
+    private static <R extends Rate> void createLastUpdatesTable() {
+        try {
+            getDatabase().queryUpdate("CREATE TABLE LAST_UPDATES "
+                    + "(TABLE VARCHAR PRIMARY KEY NOT NULL, LAST_UPDATE TIMESTAMP NOT NULL)");
+        } catch(RuntimeSQLException ex) {}
+    }
+    
+    public static Cursor getLastUpdatesTable(Cursor.Type type, Cursor.Concurrency concurrency) {
+        Cursor cursor = getDatabase().query("SELECT * FROM LAST_UPDATES", type, concurrency);
+        try {
+            cursor.init();
+            return cursor;
+        } catch(RuntimeSQLException ex) {
+            createLastUpdatesTable();
+            return getLastUpdatesTable(type, concurrency);
+        }
+    }
+    
+    public static Map<String, LocalDateTime> getLastUpdates() {
+        Cursor c = getLastUpdatesTable(Cursor.Type.FORWARD_ONLY, Cursor.Concurrency.READ_ONLY);
+        Map<String, LocalDateTime> map = new HashMap<>();
+        for(Row row : c) {
+            map.put(row.get("TABLE").toString(), 
+                    row.get("LAST_UPDATE").toLocalDateTime());
+        }
+        c.close();
+        return map;
+    }
+    
+    public static LocalDateTime getLastUpdate(Bank<?> bank, Currency currency) {
+        return getLastUpdates().get(getTableName(bank, currency));
+    } 
+    
+    public static void writeLastUpdate(Bank<?> bank, Currency currency, LocalDateTime dateTime) {
+        String table = getTableName(bank, currency);
+        String lastUpdate = dateTime.format(of("yyyy-MM-dd hh:mm:ss.nnnnnnnnn"));
+        try {
+            try {
+                getDatabase().queryUpdate(String.format(
+                        "INSERT INTO LAST_UPDATES (TABLE, LAST_UPDATE) VALUES(%s, %s)", 
+                        table, lastUpdate));
+            } catch(RuntimeSQLException ignored) {}
+        } catch(RuntimeSQLException ex) {
+            try {
+                getDatabase().queryUpdate(String.format(
+                        "UPDATE LAST_UPDATES SET LAST_UPDATE=TIMESTAMP(%s) WHERE TABLE='%s'", 
+                        lastUpdate, table));
+            } catch(RuntimeSQLException ignored) {}
+        }
     }
         
 }

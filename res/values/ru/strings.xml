@@ -55,6 +55,7 @@
     <string name="rate">КУРС</string>
     <string name="from">От</string>
     <string name="to">До</string>
+    <string name="settings">Настройки</string>
     <string name="continue">Продолжить</string>
     <string name="close_application">Закрыть программу</string>
     <string name="error_db_alredy_loaded">Случилась ошибка. База данных уже открыта в другой программе.</string>

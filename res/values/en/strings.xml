@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <strings>
     <string name="language_name">English</string>
+    <string name="app_name">Currency Viewer</string>
 	
 	<!-- Bank names -->
     <string name="bank_NBU">NBU</string>
@@ -83,6 +84,7 @@
     <string name="sale">SALE</string>
     <string name="rate">RATE</string>
     <string name="from">From</string>
+    <string name="settings">Settings</string>
     <string name="continue">Continue</string>
     <string name="close_application">Close application</string>
     <string name="to">To</string>

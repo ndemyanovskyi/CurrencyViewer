@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.shape.*?>
+<?import javafx.geometry.*?>
 <?import javafx.scene.text.*?>
 <?import java.lang.*?>
 <?import java.util.*?>
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import com.ndemyanovskyi.ui.pane.*?>
 
-<fx:root fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="StackPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
-    <!--<children>
-        <Label fx:id="valueLabel" style="-fx-text-fill: white;" text="${controller.value}">
+<fx:root fx:id="root" alignment="BASELINE_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" type="StackPane" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <AnimatedLabel fx:id="valueLabel" textFill="white" text="${controller.value}">
             <font>
                 <Font size="20.0" />
             </font>
-        </Label>
-    </children>-->
+        </AnimatedLabel>
+    </children>
+   <padding>
+      <Insets right="10.0" left="10.0" />
+   </padding>
 </fx:root>

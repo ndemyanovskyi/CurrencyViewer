@@ -5,9 +5,6 @@
  */
 package com.ndemyanovskyi.app.localization.binding;
 
-import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMap;
-import com.ndemyanovskyi.reflection.Types;
-import com.ndemyanovskyi.throwable.Exceptions;
 import com.ndemyanovskyi.app.Settings;
 import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.app.localization.binding.annotation.BooleanResource;
@@ -15,6 +12,9 @@ import com.ndemyanovskyi.app.localization.binding.annotation.ImageResource;
 import com.ndemyanovskyi.app.localization.binding.annotation.NumberResource;
 import com.ndemyanovskyi.app.localization.binding.annotation.StringResource;
 import com.ndemyanovskyi.app.res.Resources;
+import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMap;
+import com.ndemyanovskyi.reflection.Types;
+import com.ndemyanovskyi.throwable.Exceptions;
 import com.ndemyanovskyi.ui.pane.button.ImageButton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -26,6 +26,7 @@ import java.util.Objects;
 import java.util.function.Function;
 import javafx.beans.binding.StringExpression;
 import javafx.beans.property.Property;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.scene.Node;
@@ -34,9 +35,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Labeled;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.stage.Stage;
 import javafx.stage.Window;
 
-public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyProperty<T>> {
+public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyObjectProperty<T>> {
 
     private final Map<String, WritableProperty<T>> beans = new HashMap<>();
 
@@ -71,8 +73,8 @@ public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyPropert
     }
 
     @Override
-    public ReadOnlyProperty<T> get(Object key) {
-        ReadOnlyProperty<T> p = super.get(key);
+    public ReadOnlyObjectProperty<T> get(Object key) {
+        ReadOnlyObjectProperty<T> p = super.get(key);
         if(p == null) {
             throw new IllegalArgumentException(
                     "Property with key '" + key + "' does not found.");
@@ -139,7 +141,20 @@ public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyPropert
         Exceptions.execute(() -> {
             Object o = object;
             registerByAnnotations(o);
-            if(o instanceof Window) o = ((Window) o).getScene();
+            if(o instanceof Window) {
+                if(o instanceof Stage) {
+                    Stage stage = (Stage) o;
+                    String text = stage.getTitle();
+                    if(text != null) {
+                        StringExpression exp = StringExpressionParser.parse(text);
+                        if(exp != null) {
+                            stage.titleProperty().unbind();
+                            stage.titleProperty().bind(exp);
+                        }
+                    }
+                }
+                o = ((Window) o).getScene();
+            }
             if(o instanceof Scene) o = ((Scene) o).getRoot();
             if(o instanceof Node) registerNode((Node) o);
         });
@@ -285,6 +300,7 @@ public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyPropert
                 StringExpression exp
                         = StringExpressionParser.parse(text);
                 if(exp != null) {
+                    label.textProperty().unbind();
                     label.textProperty().bind(exp);
                 }
             }

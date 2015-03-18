@@ -6,17 +6,17 @@
 
 package com.ndemyanovskyi.backend;
 
-import com.ndemyanovskyi.util.Unmodifiable;
 import com.ndemyanovskyi.backend.Rate.Field;
 import com.ndemyanovskyi.backend.site.BankSite;
 import com.ndemyanovskyi.derby.Row;
+import com.ndemyanovskyi.util.Unmodifiable;
 import java.time.LocalDate;
 import java.util.Set;
 
 
 public class CommercialBank extends Bank<ExchangeRate> {
     
-    static final DatabaseManager<ExchangeRate> DATABASE_MANAGER = new DatabaseManager<ExchangeRate>() {
+    static final DatabaseHelper<ExchangeRate> DATABASE_HELPER = new DatabaseHelper<ExchangeRate>() {
 	
 	@Override
 	public ExchangeRate getRate(Bank<ExchangeRate> bank, Currency currency, Row row) {
@@ -33,13 +33,21 @@ public class CommercialBank extends Bank<ExchangeRate> {
 	}
 
 	@Override
-	public String getUpdateSql(String table, ExchangeRate rate) {
+	public String getInsertSql(String table, ExchangeRate rate) {
             String buy = !rate.getBuy().isNaN() ? rate.getBuy().toString() : "null";
             String sale = !rate.getSale().isNaN() ? rate.getSale().toString() : "null";
 	    return String.format(
                     "INSERT INTO %s VALUES('%s', %s, %s)", 
 		    table, rate.getDate(), buy, sale);
 	}
+
+        @Override
+        public String getUpdateSql(String table, ExchangeRate rate) {
+            String buy = !rate.getBuy().isNaN() ? rate.getBuy().toString() : "null";
+            String sale = !rate.getSale().isNaN() ? rate.getSale().toString() : "null";
+	    return String.format("UPDATE %s SET BUY=%s, SALE=%s WHERE DATE=DATE('%s')", 
+		    table, buy, sale, rate.getDate());
+        }
 	
     };
     
@@ -54,7 +62,7 @@ public class CommercialBank extends Bank<ExchangeRate> {
     }
 
     public CommercialBank(String tag, Set<Currency> currencySet, BankSite<? extends CommercialBank, ExchangeRate> site) {
-	super(tag, currencySet, FIELD_SET, site, DATABASE_MANAGER);
+	super(tag, currencySet, FIELD_SET, site, DATABASE_HELPER);
     }
 
     public CommercialBank(String tag, BankSite<? extends CommercialBank, ExchangeRate> site) {

@@ -1,1 +1,5 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><settings><setting name="LANGUAGE">EN</setting><setting name="STORED_DATA_YEARS_COUNT">2</setting></settings>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<settings>
+    <setting name="stored_data_years_count">1</setting>
+    <setting name="language">UA</setting>
+</settings>

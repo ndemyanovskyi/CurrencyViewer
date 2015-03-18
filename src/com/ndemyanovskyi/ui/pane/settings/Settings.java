@@ -5,20 +5,17 @@
  */
 package com.ndemyanovskyi.ui.pane.settings;
 
+import com.ndemyanovskyi.ui.pane.InitializableBorderPane;
 import java.net.URL;
 import java.util.ResourceBundle;
-import javafx.fxml.Initializable;
 
 /**
  * FXML Controller class
  *
  * @author Назарій
  */
-public class SettingsController implements Initializable {
-
-    /**
-     * Initializes the controller class.
-     */
+public class Settings extends InitializableBorderPane {
+    
     @Override
     public void initialize(URL url, ResourceBundle rb) {
 	

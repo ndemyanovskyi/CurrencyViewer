@@ -14,7 +14,7 @@
 <?import com.ndemyanovskyi.ui.pane.main.chart.*?>
 <?import com.ndemyanovskyi.backend.*?>
 
-<BorderPane stylesheets="@ChartPane.css" onKeyReleased="#onKeyReleased" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root type="BorderPane" stylesheets="@ChartPane.css" onKeyReleased="#onKeyReleased" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <top>
         <HBox fx:id="datePickerPane" alignment="CENTER" spacing="10.0" BorderPane.alignment="CENTER">
             <children>
@@ -29,15 +29,14 @@
         </HBox>
     </top>
     <center>
-        <Pane fx:id="centerPane" pickOnBounds="false" >
+        <Pane fx:id="centerPane" >
             <children>
                 <AreaChart fx:id="chart" animated="false" createSymbols="false" 
                            horizontalGridLinesVisible="false" legendVisible="false" 
                            mouseTransparent="true" minHeight="-Infinity" minWidth="-Infinity" 
                            verticalGridLinesVisible="false" AnchorPane.bottomAnchor="0.0" 
                            AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" 
-                           AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER"
-                            style="-fx-background-color: rgba(255, 255, 0, 0.3); " >
+                           AnchorPane.topAnchor="0.0" BorderPane.alignment="CENTER" >
                     <xAxis>
                         <DateAxis animated="false" autoRanging="false" side="BOTTOM" fx:id="xAxis" />
                     </xAxis>
@@ -50,15 +49,17 @@
                       onMousePressed="#onEventedPaneMousePressed" 
                       onMouseReleased="#onEventedPaneMouseReleased" 
                       onMouseDragged="#onEventedPaneMouseDragged" 
+                      onMouseEntered="#onEventedPaneMouseEntered" 
                       onMouseMoved="#onEventedPaneMouseMoved" 
                       onScroll="#onEventedPaneScroll" />
                 <Pane fx:id="descriptionPane" layoutX="${eventedPane.layoutX}" mouseTransparent="true" 
                       layoutY="${eventedPane.layoutY}" prefWidth="${eventedPane.width}" 
-                      prefHeight="${eventedPane.height}" style="-fx-background-color: rgba(0,255,255,0.3); " >
+                      prefHeight="${eventedPane.height}" >
                     <children>
-                        <Description fx:id="description"  />
-                        <Line fx:id="cursor" strokeWidth="1.0" startY="1.0" 
-                              endY="${descriptionPane.height}" />
+                        <Line fx:id="line" strokeWidth="0.4" 
+                              startY="${description.bounds.maxY}"
+                              endY="${descriptionPane.height}" opacity="0.0"   />
+                        <Description layoutY="20" fx:id="description" opacity="0.0" />
                     </children>
                 </Pane>
             </children>
@@ -77,4 +78,4 @@
     <padding>
         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
     </padding>
-</BorderPane>
+</fx:root>
