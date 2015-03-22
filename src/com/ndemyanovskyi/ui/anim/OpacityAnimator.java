@@ -5,6 +5,7 @@
  */
 package com.ndemyanovskyi.ui.anim;
 
+import com.ndemyanovskyi.ui.anim.Animator.Rationable;
 import com.ndemyanovskyi.ui.anim.Animator.State;
 import com.ndemyanovskyi.util.number.Numbers.Doubles;
 import javafx.animation.FadeTransition;
@@ -34,15 +35,6 @@ public class OpacityAnimator extends AbstractAnimator<FadeTransition, OpacityAni
     public OpacityAnimator(Duration duration, ObservableSet<Node> nodes) {
         super(duration, nodes);
     } 
-    
-    @Override
-    protected FadeTransition initTransition(Node node, FadeTransition transition, Opacity state) {
-        transition = state.init(node, transition);
-        if(transition.getDuration().isUnknown()) {
-            transition.setDuration(getDuration());
-        }
-        return transition;
-    }
 
     public void play(double value) {
         Opacity opacity = null;
@@ -58,24 +50,12 @@ public class OpacityAnimator extends AbstractAnimator<FadeTransition, OpacityAni
         play(opacity);
     }
     
-    public static final class Opacity implements State<FadeTransition> {
+    public static final class Opacity implements State<FadeTransition>, Rationable<Opacity>, Comparable<Opacity> {
 
         private final double value;
-        private final Duration duration;
 
         public Opacity(double value) {
-            this(Duration.UNKNOWN, value);
-        }
-
-        public Opacity(Duration duration, double value) {
-            Doubles.requireInRange(value, 0, 1, "value");
-            this.value = value;
-            this.duration = duration;
-        }
-
-        @Override
-        public Duration getDuration() {
-            return duration;
+            this.value = Doubles.requireInRange(value, 0, 1, "value");
         }
 
         public double getValue() {
@@ -89,6 +69,25 @@ public class OpacityAnimator extends AbstractAnimator<FadeTransition, OpacityAni
         @Override
         public boolean test(Node node) {
             return node.getOpacity() == getValue();
+        }
+
+        @Override
+        public double ratio(Node node, Opacity last) {
+            return ratio(node.getOpacity(), last);
+        }
+
+        @Override
+        public double ratio(Opacity state, Opacity last) {
+            return ratio(getValue(), last);
+        }
+
+        public double ratio(double opacity, Opacity last) {
+            return Rationable.ratio(opacity, getValue(), last.getValue());
+        }
+
+        @Override
+        public int compareTo(Opacity other) {
+            return Double.compare(getValue(), other.getValue());
         }
 
         @Override
@@ -110,12 +109,14 @@ public class OpacityAnimator extends AbstractAnimator<FadeTransition, OpacityAni
         }
 
         @Override
-        public FadeTransition init(Node node, FadeTransition transition) {
+        public FadeTransition init(Node node, FadeTransition transition, Duration duration) {
             if(transition == null) {
                 transition = new FadeTransition();
             }
             
-            transition.setDuration(getDuration());
+            if(!duration.isUnknown()) {
+                transition.setDuration(duration);
+            }
             transition.setFromValue(node.getOpacity());
             transition.setToValue(getValue());
             transition.setNode(node);
