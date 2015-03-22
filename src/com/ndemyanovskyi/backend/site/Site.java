@@ -18,6 +18,7 @@ import com.ndemyanovskyi.map.HashPool;
 import com.ndemyanovskyi.map.Pool;
 import static com.ndemyanovskyi.util.DateTimeFormatters.format;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.EnumMap;
@@ -105,9 +106,9 @@ public abstract class Site {
                         try {
                             Elements tds = trs.get(i).getElementsByTag("td");
                             Currency currency = Currency.valueOf(tds.get(1).text().toUpperCase());
-                            float countUah = Float.parseFloat(tds.get(2).text());
-                            float countCurrency = Float.parseFloat(tds.get(4).text());
-                            float rate = countCurrency / countUah;
+                            BigDecimal countUah = new BigDecimal(tds.get(2).text());
+                            BigDecimal countCurrency = new BigDecimal(tds.get(4).text());
+                            BigDecimal rate = countCurrency.divide(countUah);
                             rates.put(currency, new Rate(Bank.NBU, currency, date, rate));
                         } catch(IllegalArgumentException ex) {}
                     }
@@ -115,13 +116,12 @@ public abstract class Site {
                         throw incorrectDocument(this, doc);
                     }
                     
-                    //Adding NaN rates if neeeded.
+                    //Adding zero rates if needed.
                     if(rates.size() != Currency.values().length) {
                         Set<Currency> otherCurrencys = new HashSet<>(Arrays.asList(Currency.values()));
                         otherCurrencys.removeAll(rates.keySet());
-                        otherCurrencys.remove(Currency.UAH);
                         for(Currency c : otherCurrencys) {
-                            rates.put(c, new Rate(Bank.NBU, c, date, Float.NaN));
+                            rates.put(c, new Rate(Bank.NBU, c, date, BigDecimal.ZERO));
                         }
                     }
 		    return rates;
@@ -162,9 +162,9 @@ public abstract class Site {
 			for(CommercialBank bank : getSupportedBanks()) {
 			    for(Language language : Language.values()) {
 				if(bank.getDisplayName(language).equalsIgnoreCase(bankName)) {
-				    float buy = Float.parseFloat(data.get(2).
+				    BigDecimal buy = new BigDecimal(data.get(2).
 					    getElementsByClass("rate-value").get(0).text());
-				    float sale = Float.parseFloat(data.get(3).
+				    BigDecimal sale = new BigDecimal(data.get(3).
 					    getElementsByClass("rate-value").get(0).text());
 
 				    rates.put(bank, new ExchangeRate(bank, currency, date, buy, sale));
@@ -183,7 +183,8 @@ public abstract class Site {
                         Set<CommercialBank> otherBanks = new HashSet<>(getSupportedBanks());
                         otherBanks.removeAll(rates.keySet());
                         for(CommercialBank b : otherBanks) {
-                            rates.put(b, new ExchangeRate(b, currency, date, Float.NaN, Float.NaN));
+                            rates.put(b, new ExchangeRate(b, currency, 
+                                    date, BigDecimal.ZERO, BigDecimal.ZERO));
                         }
                     }
 		    return rates;

@@ -5,6 +5,9 @@
  */
 package com.ndemyanovskyi.backend;
 
+import com.ndemyanovskyi.app.Application;
+import com.ndemyanovskyi.app.Constants;
+import com.ndemyanovskyi.backend.site.DocumentParseException;
 import com.ndemyanovskyi.collection.set.FilteredSet;
 import com.ndemyanovskyi.derby.Database;
 import com.ndemyanovskyi.map.Pool;
@@ -13,9 +16,6 @@ import com.ndemyanovskyi.time.Period;
 import com.ndemyanovskyi.time.Period.Builder;
 import com.ndemyanovskyi.util.Compare;
 import com.ndemyanovskyi.util.Unmodifiable;
-import com.ndemyanovskyi.app.Application;
-import com.ndemyanovskyi.app.Constants;
-import com.ndemyanovskyi.backend.site.DocumentParseException;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.sql.SQLException;

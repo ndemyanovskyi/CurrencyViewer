@@ -172,7 +172,7 @@ public interface RateList<R extends Rate> extends ObservableList<R>, DefaultList
             Iterator<Field> fieldIt = rate.getFields().iterator();
             while(fieldIt.hasNext()) {
                 Field field = fieldIt.next();
-                b.append(field.name().toLowerCase()).append(": ").append(rate.get(field));
+                b.append(field.getName().toLowerCase()).append(": ").append(rate.get(field));
                 if(fieldIt.hasNext()) b.append(", ");
             }
             b.append("]");

@@ -30,7 +30,7 @@ public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
                 if(res != 0) return res;
                 res = a.getCurrency().compareTo(b.getCurrency());
                 if(res != 0) return res;
-                res = a.getField().compareTo(b.getField());
+                res = a.getField().getName().compareTo(b.getField().getName());
                 return res;
             };
     
@@ -61,7 +61,7 @@ public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
     }
 
     public <R extends Rate> Intent<R> add(Bank<R> bank, Currency currency) {
-        return add(bank, currency, Field.RATE);
+        return add(bank, currency, Rate.RATE);
     }
 
     public <R extends Rate> Intent<R> add(Bank<R> bank, Currency currency, Field field) {

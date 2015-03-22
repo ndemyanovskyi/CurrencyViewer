@@ -6,17 +6,17 @@
 
 package com.ndemyanovskyi.backend;
 
-import com.ndemyanovskyi.util.Unmodifiable;
 import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.res.Resources;
+import com.ndemyanovskyi.util.Unmodifiable;
 import java.util.Set;
 import javafx.beans.property.ReadOnlyProperty;
 
 
 public enum Currency {
     
-    UAH, AUD, AZN, GBP, BYR, DKK, USD, EUR, ISK, KZT, CAD, LTL, MDL, NOK, 
+    AUD, AZN, GBP, BYR, DKK, USD, EUR, ISK, KZT, CAD, LTL, MDL, NOK, 
     PLN, RUB, SGD, XDR, TRY, TMT, HUF, UZS, CZK, SEK, CHF, CNY, JPY;
     
     public static final String RESOURCE_PERFIX = "currency_";

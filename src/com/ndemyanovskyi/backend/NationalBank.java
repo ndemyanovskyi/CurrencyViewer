@@ -7,9 +7,12 @@
 package com.ndemyanovskyi.backend;
 
 import com.ndemyanovskyi.backend.Rate.Field;
+import static com.ndemyanovskyi.backend.Rate.RATE;
 import com.ndemyanovskyi.backend.site.BankSite;
 import com.ndemyanovskyi.derby.Row;
+import static com.ndemyanovskyi.throwable.Exceptions.ignore;
 import com.ndemyanovskyi.util.Unmodifiable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -21,35 +24,35 @@ public class NationalBank extends Bank<Rate> {
 	@Override
 	public Rate getRate(Bank<Rate> bank, Currency currency, Row row) {
             LocalDate date = row.get("DATE").toLocalDate();
-            Float rate = row.get("RATE").toFloat();
-            return new Rate(bank, currency, date, rate != null ? rate : Float.NaN);
+            BigDecimal rate = ignore(
+                    () -> row.get("RATE").toBigDecimal()).
+                    orElse(BigDecimal.ZERO);
+            return new Rate(bank, currency, date, rate);
 	}
 
 	@Override
 	public String getLayout(Bank<Rate> bank, Currency currency) {
-	    return "DATE DATE PRIMARY KEY, RATE FLOAT";
+	    return "DATE DATE PRIMARY KEY, RATE VARCHAR(30)";
 	}
 
 	@Override
 	public String getInsertSql(String table, Rate rate) {
-            String value = !rate.getRate().isNaN() ? rate.getRate().toString() : "null";
-	    return String.format("INSERT INTO %s (DATE, RATE) VALUES ('%s', %s)", 
-		    table, rate.getDate(), value);
+	    return String.format("INSERT INTO %s (DATE, RATE) VALUES (DATE('%s'), '%s')", 
+		    table, rate.getDate(), rate.getRate());
 	}
 
         @Override
         public String getUpdateSql(String table, Rate rate) {
-            String value = !rate.getRate().isNaN() ? rate.getRate().toString() : "null";
-	    return String.format("UPDATE %s SET RATE=%s WHERE DATE=DATE('%s')", 
-		    table, value, rate.getDate());
+	    return String.format("UPDATE %s SET RATE='%s' WHERE DATE=DATE('%s')", 
+		    table, rate.getRate(), rate.getDate());
         }
 	
     };
     
-    private static final Set<Field> FIELD_SET = Unmodifiable.set(Field.RATE);
+    private static final Set<Field> FIELDS = Unmodifiable.set(RATE);
 
     public NationalBank(String tag, Set<Currency> currencySet, BankSite<? extends NationalBank, Rate> site) {
-	super(tag, currencySet, FIELD_SET, site, DATABASE_HELPER);
+	super(tag, currencySet, FIELDS, site, DATABASE_HELPER);
     }
 
     public NationalBank(String tag, Currency[] currencys, BankSite<? extends NationalBank, Rate> site) {

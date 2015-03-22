@@ -739,8 +739,8 @@ public final class DateAxis extends Axis<Date> {
         MONTH_3(Calendar.MONTH, 3),
         MONTH_1(Calendar.MONTH, 1),
         WEEK(Calendar.WEEK_OF_YEAR, 1),
-        DAY(Calendar.DATE, 1),
-        HOUR_12(Calendar.HOUR, 12),
+        DAY(Calendar.DATE, 1);
+        /*HOUR_12(Calendar.HOUR, 12),
         HOUR_6(Calendar.HOUR, 6),
         HOUR_3(Calendar.HOUR, 3),
         HOUR_1(Calendar.HOUR, 1),
@@ -750,7 +750,7 @@ public final class DateAxis extends Axis<Date> {
         SECOND_15(Calendar.SECOND, 15),
         SECOND_5(Calendar.SECOND, 5),
         SECOND_1(Calendar.SECOND, 1),
-        MILLISECOND(Calendar.MILLISECOND, 1);
+        MILLISECOND(Calendar.MILLISECOND, 1);*/
 
         private final int amount;
 

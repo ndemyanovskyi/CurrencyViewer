@@ -34,7 +34,7 @@ public class Intent<R extends Rate> {
     private final BooleanProperty attached = new SimpleBooleanProperty(this, "attached", false);
 
     public Intent(Bank<R> bank, Currency currency) {
-        this(bank, currency, Field.RATE);
+        this(bank, currency, Rate.RATE);
     }
 
     public Intent(Bank<R> bank, Currency currency, Field field) {
@@ -48,7 +48,7 @@ public class Intent<R extends Rate> {
 	this.color = new FinalNonNullProperty<>(this, "color", color);
         this.instant = new FinalNonNullProperty<>(this, "instant", Instant.now());
         
-        if(!bank.getCurrencys().contains(currency)) {
+        if(!bank.getCurrencies().contains(currency)) {
             throw new IllegalArgumentException(
                     "Bank " + bank + " doesn`t support currency " + currency + ".");
         }

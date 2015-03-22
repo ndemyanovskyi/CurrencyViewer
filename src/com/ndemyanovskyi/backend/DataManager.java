@@ -106,8 +106,9 @@ public final class DataManager {
             getDatabase().queryUpdate(bank.getDatabaseHelper().getInsertSql(table, rate));
         } catch(RuntimeSQLException ex) {
             SQLException sqlCause = Database.Utils.extractCause(ex);
-            
+            LOG.log(Level.SEVERE, "Rate(" + rate + ") does not writed.", ex);
             switch(sqlCause.getSQLState()) {
+                
                 case "23505": //Duplicate value
                     if(updateIfExists) {
                         getDatabase().queryUpdate(
@@ -257,15 +258,11 @@ public final class DataManager {
                 }
                 R rate = e.getValue();
 
-                if(!rate.isNaN() || greaterOrEquals(rate.getDate(), firstDate)) {
+                if(rate.isZero() || greaterOrEquals(rate.getDate(), firstDate)) {
                     if(list != null) {
                         R other = list.get(getDate());
                         if(other != null) {
-                            rate = (R) other.merge(rate);
-                            if(!rate.equals(other)) {
-                                list.modifier().removeOrThrow(other);
-                                list.modifier().addOrThrow(rate);
-                            }
+                            list.modifier().replaceOrThrow(e.getValue());
                         }else {
                             list.modifier().addOrThrow(e.getValue());
                         }
@@ -334,7 +331,7 @@ public final class DataManager {
                             }
                             writeRate((R) e.getValue(), false);
                             
-                            if(!e.getValue().isNaN() || sites.isEmpty()) {
+                            if(!e.getValue().isZero() || sites.isEmpty()) {
                                 getSubscribedLocks().removeIf(lock -> lock.is(e.getKey()));
                             }
                         }
@@ -349,7 +346,7 @@ public final class DataManager {
 
         @Override
         protected void onSubscribe(Bank<?> subscriber) {
-            if(!subscriber.getCurrencys().contains(getCurrency())) {
+            if(!subscriber.getCurrencies().contains(getCurrency())) {
                 throw new IllegalArgumentException(
                         String.format("Subscriber bank(%s) not supported loader currency(%s)", 
                                 subscriber, getCurrency()));
@@ -415,7 +412,8 @@ public final class DataManager {
             if(list == null) {
                 List<R> rates = new ArrayList<>();
                 for(Row row : getTable(bank, currency)) {
-                    rates.add(bank.getDatabaseHelper().getRate(bank, currency, row));
+                    R rate = (bank.getDatabaseHelper().getRate(bank, currency, row));
+                    rates.add(rate);
                 }
                 list = new RateListImpl<>(bank, currency, rates);
                 CACHE.add(list);

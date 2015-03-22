@@ -5,12 +5,12 @@
  */
 package com.ndemyanovskyi.backend;
 
-import com.ndemyanovskyi.util.Unmodifiable;
-import com.ndemyanovskyi.util.number.Numbers;
-import com.ndemyanovskyi.util.number.Numbers.Floats;
 import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.res.Resources;
+import com.ndemyanovskyi.util.Unmodifiable;
+import com.ndemyanovskyi.util.number.Numbers;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
@@ -18,25 +18,27 @@ import javafx.beans.property.ReadOnlyProperty;
 
 public class Rate implements Comparable<Rate> {
     
-    private static final Set<Field> FIELDS = Unmodifiable.set(Field.RATE);
+    public static final Field RATE = new Field("RATE");
+    
+    private static final Set<Field> FIELDS = Unmodifiable.set(RATE);
 
     private RateList<? extends Rate> list;
     private final Bank<? extends Rate> bank;
     private final Currency currency;
     private final LocalDate localDate;
-    private final Float rate;
+    private final BigDecimal rate;
 
-    public Rate(Bank<Rate> bank, Currency currency, LocalDate localDate, Float rate) {
+    public Rate(Bank<Rate> bank, Currency currency, LocalDate localDate, BigDecimal rate) {
         this(null, bank, currency, localDate, rate);
     }
 
-    <T extends Rate> Rate(RateList<T> list, Bank<T> bank, Currency currency, LocalDate localDate, Float rate) {
+    <T extends Rate> Rate(RateList<T> list, Bank<T> bank, Currency currency, LocalDate localDate, BigDecimal rate) {
         this.list = list;
         this.bank = Objects.requireNonNull(bank, "bank");
         this.currency = Objects.requireNonNull(currency, "currency");
         this.localDate = Objects.requireNonNull(localDate, "localDate");
-        this.rate = Numbers.require(Objects.requireNonNull(rate, "rate"), 
-                v -> v > 0.0 || Double.isNaN(v), "rate <= 0 && rate != NaN");
+        this.rate = Numbers.require(Objects.requireNonNull(rate, "rate"),
+                v -> v.compareTo(BigDecimal.ZERO) >= 0, "rate < 0");
     }
 
     public RateList<? extends Rate> getList() {
@@ -45,6 +47,10 @@ public class Rate implements Comparable<Rate> {
 
     void setList(RateList<? extends Rate> list) {
         this.list = list;
+    }
+    
+    public boolean isZero() {
+        return getRate().equals(BigDecimal.ZERO);
     }
 
     public Currency getCurrency() {
@@ -59,53 +65,28 @@ public class Rate implements Comparable<Rate> {
         return bank;
     }
 
-    public Float getRate() {
+    public BigDecimal getRate() {
         return rate;
     }
 
-    public boolean isNaN() {
-        return rate.isNaN();
-    }
-    
-    public Rate merge(Rate rate) {
-        Objects.requireNonNull(rate, "rate");
-        if(!rate.getBank().equals(getBank())) {
-            throw new IllegalArgumentException("Banks is different.");
-        }
-        if(!rate.getCurrency().equals(getCurrency())) {
-            throw new IllegalArgumentException("Currencys is different.");
-        }
-        if(!rate.getDate().equals(getDate())) {
-            throw new IllegalArgumentException("Dates is different.");
-        }
-        return !isNaN() ? this : !rate.isNaN() ? rate : this;
-    }
-
-    public Float get(Field field) {
-        switch (field) {
-
-            case RATE:
+    public BigDecimal get(Field field) {
+        if(RATE.equals(field)) {
                 return getRate();
-
-            default:
-                throw new IllegalArgumentException(
-                        "Field '" + field + "' is unsupported by Rate.");
         }
+        
+        throw new IllegalArgumentException(
+                "Field '" + field + "' is unsupported by Rate.");
     }
     
     public Set<Field> getFields() {
         return FIELDS;
     }
 
-    public boolean is(Bank<?> bank, Currency currency, LocalDate localDate, float rate) {
+    public boolean is(Bank<?> bank, Currency currency, LocalDate localDate, BigDecimal rate) {
         return this.bank.equals(bank)
                 && this.currency.equals(currency)
                 && this.localDate.equals(localDate)
-                && Float.compare(this.rate, rate) == 0;
-    }
-
-    public static Builder builder() {
-        return new Builder();
+                && this.rate.compareTo(rate) == 0;
     }
 
     private int hash;
@@ -117,8 +98,7 @@ public class Rate implements Comparable<Rate> {
             hash = 67 * hash + Objects.hashCode(this.bank);
             hash = 67 * hash + Objects.hashCode(this.currency);
             hash = 67 * hash + Objects.hashCode(this.localDate);
-            hash = 67 * hash + (int) (Double.doubleToLongBits(this.rate)
-                    ^ (Double.doubleToLongBits(this.rate) >>> 32));
+            hash = 67 * hash + Objects.hashCode(this.rate);
         }
         return hash;
     }
@@ -135,11 +115,11 @@ public class Rate implements Comparable<Rate> {
     }
 
     @Override
-    public int compareTo(Rate o) {
-        return Float.compare(rate, o.rate);
+    public int compareTo(Rate other) {
+        return getRate().compareTo(other.getRate());
     }
 
-    public static class Builder {
+    /*public static class Builder {
 
         private Bank<?> bank;
         private Currency currency;
@@ -191,31 +171,59 @@ public class Rate implements Comparable<Rate> {
         }
         //</editor-fold>
 
-    }
+    }*/
 
-    public enum Field {
+    public static final class Field {
 
-        BUY("buy"), SALE("sale"), RATE("rate");
-
-        private final String resourceKey;
+        private final String name;
+        private final String resourceName;
         private ReadOnlyProperty<String> displayNameProperty;
 
+        public Field(String name) {
+            this(name, name.toLowerCase());
+        }
+
+        public Field(String name, String resourceName) {
+            this.name = Objects.requireNonNull(name, "name");
+            this.resourceName = Objects.requireNonNull(resourceName, "resourceName");
+        }
+
         public ReadOnlyProperty<String> displayNameProperty() {
-            return displayNameProperty != null 
-                    ? displayNameProperty 
-                    : (displayNameProperty = ResourceBindings.strings().get(resourceKey));
+            return displayNameProperty != null ? displayNameProperty 
+                    : (displayNameProperty = ResourceBindings.strings().get(resourceName));
         }
 
         public String getDisplayName(Language language) {
-            return Resources.strings(language).get(resourceKey);
+            return Resources.strings(language).get(resourceName);
         }
     
         public String getDisplayName() {
             return displayNameProperty().getValue();
         }
 
-        private Field(String resourceKey) {
-            this.resourceKey = resourceKey;
+        public String getName() {
+            return name;
+        }
+
+        public String getResourceName() {
+            return resourceName;
+        }
+
+        @Override
+        public int hashCode() {
+            int hash = 3;
+            hash = 83 * hash + Objects.hashCode(this.name);
+            hash = 83 * hash + Objects.hashCode(this.resourceName);
+            return hash;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if(o == this) return true;
+            if(o == null || !(o instanceof Field)) return false;
+            final Field other = (Field) o;
+            return Objects.equals(getResourceName(), other.getName()) 
+                    && Objects.equals(getResourceName(), other.getResourceName());
         }
 
     }

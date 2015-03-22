@@ -6,10 +6,15 @@
 
 package com.ndemyanovskyi.backend;
 
+import static com.ndemyanovskyi.backend.ExchangeRate.BUY;
+import static com.ndemyanovskyi.backend.ExchangeRate.SALE;
 import com.ndemyanovskyi.backend.Rate.Field;
+import static com.ndemyanovskyi.backend.Rate.RATE;
 import com.ndemyanovskyi.backend.site.BankSite;
 import com.ndemyanovskyi.derby.Row;
+import static com.ndemyanovskyi.throwable.Exceptions.ignore;
 import com.ndemyanovskyi.util.Unmodifiable;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Set;
 
@@ -21,37 +26,36 @@ public class CommercialBank extends Bank<ExchangeRate> {
 	@Override
 	public ExchangeRate getRate(Bank<ExchangeRate> bank, Currency currency, Row row) {
             LocalDate date = row.get("DATE").toLocalDate();
-            Float buy = row.get("BUY").toFloat();
-            Float sale = row.get("SALE").toFloat();
-            return new ExchangeRate(bank, currency, date, 
-                    buy != null ? buy : Float.NaN, sale != null ? sale : Float.NaN);
+            BigDecimal buy = ignore(() -> row.get("BUY").toBigDecimal()).
+                    orElse(BigDecimal.ZERO);
+            BigDecimal sale = ignore(() -> row.get("SALE").toBigDecimal()).
+                    orElse(BigDecimal.ZERO);
+            return new ExchangeRate(bank, currency, date, buy, sale);
 	}
 
 	@Override
 	public String getLayout(Bank<ExchangeRate> bank, Currency currency) {
-	    return "DATE DATE PRIMARY KEY, BUY FLOAT, SALE FLOAT";
+	    return "DATE DATE PRIMARY KEY, BUY VARCHAR(30), SALE VARCHAR(30)";
 	}
 
 	@Override
 	public String getInsertSql(String table, ExchangeRate rate) {
-            String buy = !rate.getBuy().isNaN() ? rate.getBuy().toString() : "null";
-            String sale = !rate.getSale().isNaN() ? rate.getSale().toString() : "null";
-	    return String.format(
-                    "INSERT INTO %s VALUES('%s', %s, %s)", 
-		    table, rate.getDate(), buy, sale);
+	    String str = String.format(
+                    "INSERT INTO %s (DATE, BUY, SALE) VALUES(DATE('%s'), '%s', '%s')", 
+		    table, rate.getDate(), rate.getBuy(), rate.getSale());
+            System.out.println(str);
+            return str;
 	}
 
         @Override
         public String getUpdateSql(String table, ExchangeRate rate) {
-            String buy = !rate.getBuy().isNaN() ? rate.getBuy().toString() : "null";
-            String sale = !rate.getSale().isNaN() ? rate.getSale().toString() : "null";
-	    return String.format("UPDATE %s SET BUY=%s, SALE=%s WHERE DATE=DATE('%s')", 
-		    table, buy, sale, rate.getDate());
+	    return String.format("UPDATE %s SET BUY='%s', SALE='%s' WHERE DATE=DATE('%s')", 
+		    table, rate.getBuy(), rate.getSale(), rate.getDate());
         }
 	
     };
     
-    private static final Set<Field> FIELD_SET = Unmodifiable.set(Field.values());
+    private static final Set<Field> FIELDS = Unmodifiable.set(BUY, SALE, RATE);
 
     public CommercialBank(String tag, Set<Currency> currencySet) {
 	this(tag, currencySet, null);
@@ -62,7 +66,7 @@ public class CommercialBank extends Bank<ExchangeRate> {
     }
 
     public CommercialBank(String tag, Set<Currency> currencySet, BankSite<? extends CommercialBank, ExchangeRate> site) {
-	super(tag, currencySet, FIELD_SET, site, DATABASE_HELPER);
+	super(tag, currencySet, FIELDS, site, DATABASE_HELPER);
     }
 
     public CommercialBank(String tag, BankSite<? extends CommercialBank, ExchangeRate> site) {

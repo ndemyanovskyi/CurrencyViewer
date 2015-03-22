@@ -49,6 +49,11 @@ public class LeftDecriptionItem extends InitializableVBox {
         return intentProperty().get();
     }
 
+    @Override
+    public void setHeight(double value) {
+        super.setHeight(value);
+    }
+
     private void setIntent(Intent<?> intent) {
         intentProperty().set(intent);
     }

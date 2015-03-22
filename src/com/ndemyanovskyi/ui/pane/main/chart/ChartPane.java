@@ -6,7 +6,6 @@ import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.res.Resources;
 import com.ndemyanovskyi.backend.Bank;
 import com.ndemyanovskyi.backend.Currency;
-import com.ndemyanovskyi.backend.DataManager;
 import com.ndemyanovskyi.backend.Rate;
 import com.ndemyanovskyi.backend.Rate.Field;
 import com.ndemyanovskyi.backend.RateList;
@@ -27,7 +26,7 @@ import com.ndemyanovskyi.util.Convert;
 import static com.ndemyanovskyi.util.Convert.toDate;
 import static com.ndemyanovskyi.util.Convert.toLocalDate;
 import com.ndemyanovskyi.util.beans.ConvertedBinding;
-import java.io.IOException;
+import java.math.BigDecimal;
 import java.net.URL;
 import java.time.LocalDate;
 import static java.time.temporal.ChronoUnit.DAYS;
@@ -49,7 +48,6 @@ import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.scene.Cursor;
-import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
@@ -73,7 +71,7 @@ import javafx.util.Duration;
 
 public class ChartPane extends InitializableBorderPane {
     
-    @FXML private XYChart<Date, Float> chart;
+    @FXML private XYChart<Date, BigDecimal> chart;
     @FXML private DateAxis xAxis;
     @FXML private NumberAxis yAxis;
 
@@ -118,13 +116,6 @@ public class ChartPane extends InitializableBorderPane {
     public void initialize(URL location, ResourceBundle resources) {
         ResourceBindings.register(this);
         
-        try {
-            System.out.println(DataManager.loadRate(
-                    Bank.SBER_BANK, Currency.EUR, LocalDate.parse("2014-06-01")));
-        } catch(IOException ex) {
-            ex.printStackTrace();;
-        }
-        
         range = MINIMAL_PERIOD.getValue().toRange();
         MINIMAL_PERIOD.addListener(p -> updateRange());
         
@@ -145,7 +136,7 @@ public class ChartPane extends InitializableBorderPane {
         t.setCycleCount(Animation.INDEFINITE);
         t.play();*/
         
-        initChart();    
+        initChart();   
         
         chart.prefWidthProperty().bind(centerPane.widthProperty());
         chart.prefHeightProperty().bind(centerPane.heightProperty());
@@ -167,12 +158,9 @@ public class ChartPane extends InitializableBorderPane {
             return line.getStartX() - description.getWidth() + offset;
         }, line.startXProperty()));
                 
-        getIntents().add(Bank.NBU, Currency.EUR);
-        getIntents().add(Bank.SBER_BANK, Currency.EUR, Rate.Field.BUY);
-        getIntents().add(Bank.FIDOBANK, Currency.EUR, Rate.Field.BUY);
-        getIntents().add(Bank.OSCHAD_BANK, Currency.EUR, Rate.Field.BUY);
-        getIntents().add(Bank.OSCHAD_BANK, Currency.EUR, Rate.Field.SALE);
-        getIntents().add(Bank.PUMB, Currency.EUR, Rate.Field.SALE);
+        for(Currency c : Currency.defaultValues()) {
+            getIntents().add(Bank.SBER_BANK, c);
+        }
     } 
     
     @FXML
@@ -254,7 +242,7 @@ public class ChartPane extends InitializableBorderPane {
             private final Intent<R> intent;
             private final Legend legend;
             private Task task;
-            private final Series<Date, Float> series;
+            private final Series<Date, BigDecimal> series;
             private OpacityAnimator seriesAnimator;
             private final TranslateAnimator legendAnimator;
 
@@ -295,7 +283,7 @@ public class ChartPane extends InitializableBorderPane {
                 return item;
             }
 
-            public Series<Date, Float> getSeries() {
+            public Series<Date, BigDecimal> getSeries() {
                 return series;
             }
 
@@ -324,10 +312,10 @@ public class ChartPane extends InitializableBorderPane {
                 }
             }
             
-            private int indexFor(List<Data<Date, Float>> list, Rate rate) {
+            private int indexFor(List<Data<Date, BigDecimal>> list, Rate rate) {
                 Date date = toDate(rate.getDate());
                 for(int j = 0; j < list.size(); j++) {
-                    Data<Date, Float> data = list.get(j);
+                    Data<Date, BigDecimal> data = list.get(j);
                     if(less(date, data.getXValue())) {
                         return j;
                     }
@@ -341,9 +329,9 @@ public class ChartPane extends InitializableBorderPane {
                     if(change.wasAdded()) {
                         for(int i = change.getFrom(); i < change.getTo(); i++) {
                             R rate = change.getList().get(i);
-                            Float value = rate.get(intent.getField());
-                            if(!value.isNaN()) {
-                                List<Data<Date, Float>> list = series.getData();
+                            BigDecimal value = rate.get(intent.getField());
+                            if(value.compareTo(BigDecimal.ZERO) > 0) {
+                                List<Data<Date, BigDecimal>> list = series.getData();
                                 Date date = toDate(rate.getDate());
                                        
                                 int index = indexFor(list, rate);
@@ -359,6 +347,7 @@ public class ChartPane extends InitializableBorderPane {
                     }
                 }
                 updateRange();
+                updateDescription();
             }
 
             @Override
@@ -380,15 +369,19 @@ public class ChartPane extends InitializableBorderPane {
                     super(intent.getBank(), intent.getCurrency());
                     start();
                 }
+
+                @Override
+                protected void onStart() {
+                    getLegend().setProgress(-1);
+                }
                 
                 @Override
                 protected void onLoadFromDatabaseSuccess(RateList<R> list) {
                     legend.setProgress(0.5);
                     for(int i = 0; i < list.size(); i++) {
                         R rate = list.get(i);
-                        Float value = rate.get(intent.getField());
-                        if(!value.isNaN()) {
-                            System.out.println(rate);
+                        BigDecimal value = rate.get(intent.getField());
+                        if(value.compareTo(BigDecimal.ZERO) > 0) {
                             series.getData().add(new Data<>(toDate(rate.getDate()), value));
                         }
                     }
@@ -427,7 +420,7 @@ public class ChartPane extends InitializableBorderPane {
                 
                 @Override
                 protected void onFinish(Result result) {
-                    legend.setProgress(1.0);
+                    legend.setProgress(1.0d);
                     updateRange();                    
                 }
                 
@@ -508,7 +501,7 @@ public class ChartPane extends InitializableBorderPane {
         line.setStartX(e.getX());
         line.setEndX(e.getX());
         
-        updateDescription(e.getX());
+        updateDescription();
     }
     
     PopupWindow w;
@@ -551,7 +544,7 @@ public class ChartPane extends InitializableBorderPane {
         }        
         
         previousX = e.getX();
-        updateDescription(line.getStartX());
+        updateDescription();
     }
     
     private static Toast.Builder toastBuilder(DatePicker picker) {
@@ -571,6 +564,7 @@ public class ChartPane extends InitializableBorderPane {
 
         int minDifference = Resources.numbers().
                 getAsInteger("min_series_date_difference");
+        if(minDifference < 1) minDifference = 1;
 
         if(newDate.isAfter(range.last())) {
             toastBuilder(fromDatePicker).
@@ -611,6 +605,7 @@ public class ChartPane extends InitializableBorderPane {
         
         int minDifference = Resources.numbers().
                 getAsInteger("min_series_date_difference");
+        if(minDifference < 1) minDifference = 1;
               
         if(newDate.isAfter(range.last())) {
             toastBuilder(toDatePicker).
@@ -668,7 +663,7 @@ public class ChartPane extends InitializableBorderPane {
                     getAsInteger("min_series_date_difference");
             
             if(upper - lower >= TimeUnit.DAYS.toMillis(minDifference)) {
-                updateDescription(e.getX());
+                updateDescription();
                 long min = toDate(range.first()).getTime();
                 long max = toDate(range.last()).getTime();
 
@@ -687,55 +682,56 @@ public class ChartPane extends InitializableBorderPane {
                 : new Date(date.getYear(), date.getMonth(), date.getDate() + 1);
     }
     
-    private float getNormalizedValue(RateList<?> list, LocalDate date, Field field) {
-        LocalDate offsetDate = list.getPeriod().floor(date);
-        Float value = 0f;
-        Rate rate = list.get(offsetDate);
-        if(rate != null) {
+    private BigDecimal getNormalizedValue(RateList<?> list, LocalDate date, Field field) {
+        LocalDate floor = list.getPeriod().floor(date);
+        LocalDate ceiling = list.getPeriod().ceiling(date);
+        BigDecimal value = BigDecimal.ZERO;
+        Rate rate = list.get(floor);
+        if(ceiling != null && rate != null) {
             value = rate.get(field);
 
-            while(value != null && value.isNaN()) {
-                offsetDate = list.getPeriod().lower(offsetDate);
-                rate = list.get(offsetDate);
+            while(value.compareTo(BigDecimal.ZERO) <= 0) {
+                floor = list.getPeriod().lower(floor);
+                rate = list.get(floor);
                 if(rate == null) break;
                 value = rate.get(field);
             }
         }
-        if(value == null || value.isNaN()) value = 0f;
         return value;
     }
     
-    private float getMaxValue(LocalDate from, LocalDate to) {
+    private BigDecimal getMaxValue(LocalDate from, LocalDate to) {
         final Period period = Period.ofInclusive(from, to);
-        float max = 0f;
+        BigDecimal max = BigDecimal.ZERO;
         
         for(IntentsManager.SeriesController<?> sc 
                 : getIntentsManager().getSeriesControllers().values()) {
             RateList<?> list = sc.getTask().getRateList();
             if(list != null && !list.isEmpty()) {
-                float localMax = 0f;
+                BigDecimal localMax = BigDecimal.ZERO;
                 Field field = sc.getIntent().getField();
-                for(Rate rate : list.subList(period)) {
-                    float value = rate.get(field);
-                    if(Float.isFinite(value)) {
-                        localMax = Compare.max(value, localMax);
+                synchronized(list) {
+                    for(Rate rate : list.subList(period)) {
+                        BigDecimal value = rate.get(field);
+                        if(value != null) {
+                            localMax = Compare.max(value, localMax);
+                        }
                     }
+                    max = Compare.max(localMax, max);
                 }
-                System.out.println(sc.getIntent() + ": " + localMax);
-                max = Compare.max(localMax, max);
             }
         }
         return max;
     }
     
-    private void updateDescription(double x) {        
-        LocalDate date = toLocalDate(round(xAxis.getValueForDisplay(x)));
+    private void updateDescription() {        
+        LocalDate date = toLocalDate(round(xAxis.getValueForDisplay(line.getStartX())));
         
         description.setDate(date);
         for(IntentsManager.SeriesController<?> sc : getIntentsManager().getSeriesControllers().values()) {
             RateList<?> list = sc.getTask().getRateList();
             if(list != null && !list.isEmpty()) {
-                float value = getNormalizedValue(list, date, sc.getIntent().getField());
+                BigDecimal value = getNormalizedValue(list, date, sc.getIntent().getField());
                 sc.getItem().setValue(value);
             }
         }
@@ -743,25 +739,18 @@ public class ChartPane extends InitializableBorderPane {
         //updating opacity
         
         
-        boolean intersects = false;
         Bounds bounds = description.getBoundsInParent();
-        for(IntentsManager.SeriesController<?> sc : getIntentsManager().getSeriesControllers().values()) {
-            Node node = sc.getSeries().getNode();
-            if(node.intersects(bounds)) {
-                intersects = true;
-                break;
-            }
-        }
-        /*LocalDate from = toLocalDate(round(xAxis.getValueForDisplay(bounds.getMinX() + 30)));
+        LocalDate from = toLocalDate(round(xAxis.getValueForDisplay(bounds.getMinX() + 30)));
         LocalDate to = toLocalDate(round(xAxis.getValueForDisplay(bounds.getMaxX() - 30)));
-        double max = getMaxValue(from, to);
+        BigDecimal max = getMaxValue(from, to);
         
-        double cross = yAxis.getValueForDisplay(bounds.getMaxY() - 38).doubleValue();*/
+        BigDecimal cross = BigDecimal.valueOf(yAxis.
+                getValueForDisplay(bounds.getMaxY() - 38).doubleValue());
         
-        if(!intersects) {
+        if(max.compareTo(cross) < 0) {
             descriptionPaneAnimator.play(1.0d);
         } else {
-            descriptionPaneAnimator.play(0.4d);
+            descriptionPaneAnimator.play(0.2d);
         }
     }
     //</editor-fold>

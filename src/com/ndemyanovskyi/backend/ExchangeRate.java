@@ -6,12 +6,9 @@
 
 package com.ndemyanovskyi.backend;
 
-import com.ndemyanovskyi.reflection.Types;
 import com.ndemyanovskyi.util.Unmodifiable;
 import com.ndemyanovskyi.util.number.Numbers;
-import com.ndemyanovskyi.util.number.Numbers.Floats;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.Objects;
 import java.util.Set;
@@ -19,74 +16,52 @@ import java.util.Set;
 
 public class ExchangeRate extends Rate {
     
-    private static final Set<Field> FIELDS = Unmodifiable.set(Field.BUY, Field.SALE, Field.RATE);
+    public static final Field BUY = new Field("BUY");
+    public static final Field SALE = new Field("SALE");
     
-    private final Float sale;
-    private final Float buy;
+    private static final Set<Field> FIELDS = Unmodifiable.set(BUY, SALE, RATE);
+    
+    private final BigDecimal sale;
+    private final BigDecimal buy;
 
-    public ExchangeRate(Bank<? extends ExchangeRate> bank, Currency currency, LocalDate date, Float buy, Float sale) {
+    public ExchangeRate(Bank<? extends ExchangeRate> bank, Currency currency, LocalDate date, BigDecimal buy, BigDecimal sale) {
 	this(null, bank, currency, date, buy, sale);
     }
 
-    <T extends ExchangeRate> ExchangeRate(RateList<T> list, Bank<T> bank, Currency currency, LocalDate date, float buy, float sale) {
-	super(list, bank, currency, date, (buy + sale) / 2);
+    <T extends ExchangeRate> ExchangeRate(RateList<T> list, Bank<T> bank, Currency currency, LocalDate date, BigDecimal buy, BigDecimal sale) {
+	super(list, bank, currency, date, calcRate(buy, sale));
         
-	this.sale = Numbers.require(Objects.requireNonNull(sale, "sale"), 
-                v -> v > 0.0 || v.isNaN(), "sale <= 0 && sale != NaN");
-	this.buy = Numbers.require(Objects.requireNonNull(buy, "buy"), 
-                v -> v > 0.0 || v.isNaN(), "buy <= 0 && buy != NaN");
+        this.buy = Numbers.require(Objects.requireNonNull(buy, "buy"),
+                v -> v.compareTo(BigDecimal.ZERO) >= 0, "buy < 0");
+        this.sale = Numbers.require(Objects.requireNonNull(sale, "sale"),
+                v -> v.compareTo(BigDecimal.ZERO) >= 0, "sale < 0");
     }
     
-    private Float getSupportedValue(Rate rate, Field field) {
-        return rate instanceof ExchangeRate 
-                ? rate.get(field)
-                : rate.get(Field.RATE);
+    private static BigDecimal calcRate(BigDecimal buy, BigDecimal sale) {
+        if(buy == null || buy.equals(BigDecimal.ZERO)) return sale;
+        if(sale == null || sale.equals(BigDecimal.ZERO)) return buy;
+        return buy.add(sale).divide(BigDecimal.valueOf(2));
+    }
+    
+    @Override
+    public boolean isZero() {
+        return getBuy().equals(BigDecimal.ZERO) 
+                && getSale().equals(BigDecimal.ZERO);
     }
 
     @Override
     public Bank<? extends ExchangeRate> getBank() {
         return (Bank<? extends ExchangeRate>) super.getBank();
     }
-
-    @Override
-    public ExchangeRate merge(Rate rate) {
-        super.merge(rate);
-        
-        Float mergedBuy = getBuy().isNaN() 
-                ? getSupportedValue(rate, Field.BUY) 
-                : getBuy();
-        
-        Float mergedSale = getBuy().isNaN() 
-                ? getSupportedValue(rate, Field.SALE) 
-                : getSale();
-        
-        return !mergedBuy.equals(getBuy()) || mergedSale.equals(getSale())
-                ? new ExchangeRate(getBank(), getCurrency(), getDate(), mergedBuy, mergedSale)
-                : this;        
-    }
-
-    @Override
-    public boolean isNaN() {
-        return buy.isNaN() && sale.isNaN();
-    }
     
     @Override
-    public Float get(Field field) {
-        switch(field) {
-            
-            case RATE: 
-                return getRate();
-            
-            case BUY: 
-                return getBuy();
-            
-            case SALE: 
-                return getSale();
-            
-            default: 
-                throw new IllegalArgumentException(
-                        "Field '" + field + "' is unsupported by ExchangeRate.");
-        }
+    public BigDecimal get(Field field) {
+        if(BUY.equals(field)) return getBuy();
+        if(SALE.equals(field)) return getSale();
+        if(RATE.equals(field)) return getRate();
+        
+        throw new IllegalArgumentException(
+                "Field '" + field + "' is unsupported by ExchangeRate.");
     }
     
     @Override
@@ -94,23 +69,23 @@ public class ExchangeRate extends Rate {
         return FIELDS;
     }
 
-    public Float getBuy() {
+    public BigDecimal getBuy() {
 	return buy;
     }
 
-    public Float getSale() {
+    public BigDecimal getSale() {
 	return sale;
     }
     
-    public boolean is(Bank<?> bank, Currency currency, LocalDate date, double buy, double sale) {
+    public boolean is(Bank<?> bank, Currency currency, LocalDate date, BigDecimal buy, BigDecimal sale) {
 	return super.is(bank, currency, date, getRate())
-		&& this.sale == sale 
-		&& this.buy == buy;
+		&& this.sale.compareTo(sale) == 0
+		&& this.buy.compareTo(buy) == 0;
     }
    
-    public static Builder builder() {
+    /*public static Builder builder() {
 	return new Builder();
-    }
+    }*/
 	
     private int hash;
 
@@ -118,12 +93,8 @@ public class ExchangeRate extends Rate {
     public int hashCode() {
 	if(hash == 0) {
 	    hash = super.hashCode();
-	    hash = 67 * hash + (int) 
-		    (Double.doubleToLongBits(this.sale) ^ 
-		    (Double.doubleToLongBits(this.sale) >>> 32));
-	    hash = 67 * hash + (int) 
-		    (Double.doubleToLongBits(this.buy) ^ 
-		    (Double.doubleToLongBits(this.buy) >>> 32));
+	    hash = 67 * hash + Objects.hashCode(buy);
+	    hash = 67 * hash + Objects.hashCode(sale);
 	}
 	return hash;
     }
@@ -143,7 +114,7 @@ public class ExchangeRate extends Rate {
 	return "Rate [" + "bank=" + getBank() + ", currency=" + getCurrency() + ", date=" + getDate() + ", sale=" + sale + ", buy=" + buy + ", rate=" + getRate() + ']';
     }
     
-    public static class Builder extends Rate.Builder {
+    /*public static class Builder extends Rate.Builder {
 	
 	private float sale;
 	private float buy;
@@ -222,6 +193,6 @@ public class ExchangeRate extends Rate {
 	}
 	//</editor-fold>
 
-    }
+    }*/
 
 }

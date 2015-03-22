@@ -43,17 +43,19 @@ public abstract class Bank<R extends Rate> {
     
     public static final CommercialBank RAIFFEISEN_BANK_AVAL = new CommercialBank("RAIFFEISEN_BANK_AVAL");
     public static final CommercialBank FINANCE_AND_CREDIT = new CommercialBank("FINANCE_AND_CREDIT");
-    public static final CommercialBank PRIVAT_BANK = new CommercialBank("PRIVAT_BANK");
     public static final CommercialBank UKRSYB_BANK = new CommercialBank("UKRSYB_BANK");
     public static final CommercialBank UKRGAZ_BANK = new CommercialBank("UKRGAZ_BANK");
     public static final CommercialBank OSCHAD_BANK = new CommercialBank("OSCHAD_BANK");
     public static final CommercialBank SBER_BANK = new CommercialBank("SBER_BANK");
     public static final CommercialBank FIDOBANK = new CommercialBank("FIDOBANK");
     public static final CommercialBank VTB_BANK = new CommercialBank("VTB_BANK");
+    
+    //Without CHF    
     public static final CommercialBank PUMB = new CommercialBank("PUMB");
+    public static final CommercialBank PRIVAT_BANK = new CommercialBank("PRIVAT_BANK");
     
     private final String name;
-    private final Set<Currency> currencySet;
+    private final Set<Currency> currencies;
     private final Set<Field> fieldSet;
     private final BankSite<? extends Bank, R> site;
     private final DatabaseHelper<R> databaseHelper;
@@ -75,10 +77,10 @@ public abstract class Bank<R extends Rate> {
     Bank(String tag, Set<Currency> currencySet, Set<Field> fieldSet, BankSite<? extends Bank, R> site, DatabaseHelper<R> databaseHelper) {
 	this.name = Objects.requireNonNull(tag, "tag");
 	this.site = site;
-	this.currencySet = Collections.requireNonEmpty(
+	this.currencies = Collections.requireNonEmpty(
 		Objects.requireNonNull(currencySet, "currencySet"), "currencySet is empty");
 	this.fieldSet = Collections.requireNonEmpty(
-		Objects.requireNonNull(fieldSet, "fieldSet"), "fieldSet is empty");
+		Objects.requireNonNull(fieldSet, "fieldSet"));
 	this.databaseHelper = Objects.requireNonNull(databaseHelper, "databaseHelper");
         this.displayNameProperty = ResourceBindings.strings().get(RESOURCE_PREFIX + name);
         
@@ -126,8 +128,6 @@ public abstract class Bank<R extends Rate> {
     public BankSite<? extends Bank, R> getSite() {
 	return site;
     }
-    
-    //abstract Map<Currency, R> loadRates(LocalDate date) throws IOException;
 
     DatabaseHelper<R> getDatabaseHelper() {
 	return databaseHelper;
@@ -137,8 +137,8 @@ public abstract class Bank<R extends Rate> {
         return fieldSet;
     }
 
-    public Set<Currency> getCurrencys() {
-	return currencySet;
+    public Set<Currency> getCurrencies() {
+	return currencies;
     }
 
     public String getName() {

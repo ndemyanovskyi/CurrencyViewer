@@ -9,15 +9,14 @@ import com.ndemyanovskyi.ui.pane.AnimatedLabel;
 import com.ndemyanovskyi.ui.pane.InitializableStackPane;
 import com.ndemyanovskyi.util.Compare;
 import com.ndemyanovskyi.util.DateTimeFormatters;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.ListIterator;
 import javafx.beans.InvalidationListener;
-import javafx.beans.property.FloatProperty;
 import javafx.beans.property.ListProperty;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleFloatProperty;
 import javafx.beans.property.SimpleListProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
@@ -63,7 +62,6 @@ public class Description extends InitializableStackPane {
             dateLabel.setVisible(localDate != null);
             dateLabel.setText(localDate != null
                     ? FORMATTER.format(localDate) : "");
-            dateLabel.layout();
         });
     } 
 
@@ -112,16 +110,16 @@ public class Description extends InitializableStackPane {
     public final static class Item {
         
         private final ObjectProperty<Intent<?>> intent = new SimpleObjectProperty<>();
-        private final FloatProperty value = new SimpleFloatProperty(this, "value");
+        private final ObjectProperty<BigDecimal> value = new SimpleObjectProperty<>(this, "value");
         
         private final LeftDecriptionItem leftItem = new LeftDecriptionItem(intent);
-        private final RightDecriptionItem rightItem = new RightDecriptionItem(value);
+        private final RightDecriptionItem rightItem = new RightDecriptionItem(this, value);
         
         public Item(Intent<?> intent) {
-            this(intent, 0);
+            this(intent, BigDecimal.ZERO);
         }
         
-        public Item(Intent<?> intent, float value) {
+        public Item(Intent<?> intent, BigDecimal value) {
             setIntent(intent);
             setValue(value);
         }
@@ -130,7 +128,7 @@ public class Description extends InitializableStackPane {
             return intent;
         }
         
-        public FloatProperty valueProperty() {
+        public ObjectProperty<BigDecimal> valueProperty() {
             return value;
         }
 
@@ -142,7 +140,7 @@ public class Description extends InitializableStackPane {
             return leftItem;
         }
         
-        public void setValue(float value) {
+        public void setValue(BigDecimal value) {
             valueProperty().set(value);
         }
         
@@ -154,7 +152,7 @@ public class Description extends InitializableStackPane {
             return intentProperty().get();
         }
 
-        public Float getValue() {
+        public BigDecimal getValue() {
             return valueProperty().get();
         }
         
