@@ -5,435 +5,462 @@
  */
 package com.ndemyanovskyi.ui.toast;
 
-import com.ndemyanovskyi.util.number.Numbers.Integers;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyBooleanProperty;
+import javafx.beans.property.ReadOnlyBooleanWrapper;
+import javafx.beans.property.ReadOnlyObjectProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.geometry.Insets;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
+import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.text.TextAlignment;
 import javafx.stage.Window;
+import javafx.util.Duration;
 
-public abstract class Toast<T> {
-
-    static final javafx.util.Duration ANIMATION_DURATION = javafx.util.Duration.seconds(0.3);
+public class Toast<T> {
+    
+    public static final Duration DURATION_SHORT = Duration.millis(2500);
+    public static final Duration DURATION_LONG = Duration.millis(5500);
 
     private final T owner;
-    private Node node;
-    private Alignment alignment = Alignment.CENTER;
-    private Duration duration = Duration.SHORT;
-    private Offset offset = Offset.ZERO;
+    private final BorderPane node;
+    private final Node content;
+    private final Pos alignment;
+    private final Duration duration;
+    private final Point2D offset;
+    
+    private ToastPopup<T> popup;
+    private Timeline hidingTimeline;
 
-    boolean shown;
-    boolean showing;
-    boolean inQueue;
-    boolean cancelled;
+    private final ReadOnlyBooleanWrapper shown = new ReadOnlyBooleanWrapper(this, "shown");
+    private final ReadOnlyBooleanWrapper showing = new ReadOnlyBooleanWrapper(this, "showing");
+    private final ReadOnlyBooleanWrapper cancelled = new ReadOnlyBooleanWrapper(this, "cancelled");
+    private final ReadOnlyBooleanWrapper inQueue = new ReadOnlyBooleanWrapper(this, "inQueue");
+    private final ReadOnlyObjectWrapper<ToastQueue> queue = new ReadOnlyObjectWrapper(this, "queue");
+    private final ReadOnlyObjectWrapper<Instant> showingTime = new ReadOnlyObjectWrapper(this, "showingTime");
+    private final ReadOnlyObjectWrapper<Window> ownerWindow = new ReadOnlyObjectWrapper<>(this, "ownerWindow");
 
-    Toast(T owner) {
-	this.owner = Objects.requireNonNull(owner, "owner");
+    private ObjectProperty<EventHandler<? super ActionEvent>> onShowing;
+    private ObjectProperty<EventHandler<? super ActionEvent>> onShown;
+    private ObjectProperty<EventHandler<? super ActionEvent>> onHiding;
+    private ObjectProperty<EventHandler<? super ActionEvent>> onHidden;
+    
+    Toast(Builder<T> builder) {
+	this.owner = builder.getOwner();
+	this.offset = builder.getOffset();
+	this.content = builder.getContent();
+	this.duration = builder.getDuration();
+	this.alignment = builder.getAlignment();
+	
+	inQueue.bind(queue.isNotNull());
+	
+	showing.addListener(p -> {
+	    if(isShowing()) {
+		shown.set(true);
+		showingTime.set(Instant.now());
+	    }
+	});
+	cancelled.addListener(p -> {
+	    if(isCancelled()) showing.set(false);
+	});
+	
+	BorderPane container = new BorderPane(content);
+	container.setStyle(builder.getStyle());
+	container.getStyleClass().addAll(builder.getStyleClass());
+	container.getStylesheets().addAll(builder.getStylesheets());
+	container.addEventHandler(MouseEvent.MOUSE_CLICKED, e -> {
+	    if(e.getClickCount() == 2) {
+		cancel();
+	    }
+	});
+	this.node = container;
     }
-
-    public Alignment getAlignment() {
+    
+    //Getters
+    
+    public final Pos getAlignment() {
 	return alignment;
     }
 
-    public T getOwner() {
+    public final T getOwner() {
 	return owner;
     }
 
-    public void setAlignment(Alignment alignment) {
-	this.alignment = Objects.requireNonNull(alignment, "alignment");
-    }
-
-    public Duration getDuration() {
-	return duration;
-    }
-
-    public void setDuration(Duration duration) {
-	this.duration = Objects.requireNonNull(duration, "duration");
-    }
-
-    public Offset getOffset() {
-	return offset;
-    }
-
-    public void setOffset(Offset offset) {
-	this.offset = Objects.requireNonNull(offset, "offset");
-    }
-
-    public void setOffset(double x, double y) {
-	this.offset = Offset.of(x, y);
-    }
-
-    public void setNode(Node node) {
-	this.node = node;
-    }
-
-    public Node getNode() {
+    public final Region getNode() {
 	return node;
     }
 
-    public boolean isShown() {
-	return shown;
+    public final Duration getDuration() {
+	return duration;
     }
 
-    public boolean isShowing() {
-	return showing;
+    public final Point2D getOffset() {
+	return offset;
     }
 
-    public boolean isHidden() {
-	return !isShowing();
+    public final Node getContent() {
+	return content;
     }
 
-    public boolean isInQueue() {
-	return inQueue;
+    public final Instant getShowingTime() {
+	return showingTime.get();
     }
 
-    public boolean isCancelled() {
-	return cancelled;
+    public final boolean isShown() {
+	return shown.get();
     }
 
-    @Override
-    public int hashCode() {
-	int hash = 7;
-	hash = 89 * hash + Objects.hashCode(this.owner);
-	hash = 89 * hash + Objects.hashCode(this.node);
-	hash = 89 * hash + Objects.hashCode(this.alignment);
-	hash = 89 * hash + Objects.hashCode(this.duration);
-	hash = 89 * hash + Objects.hashCode(this.offset);
-	hash = 89 * hash + (this.shown ? 1 : 0);
-	hash = 89 * hash + (this.showing ? 1 : 0);
-	hash = 89 * hash + (this.inQueue ? 1 : 0);
-	hash = 89 * hash + (this.cancelled ? 1 : 0);
-	return hash;
+    public final boolean isInQueue() {
+	return inQueue.get();
     }
 
-    @Override
-    public boolean equals(Object obj) {
-	if(obj == null) return false;
-	if(!(obj instanceof Toast)) return false;
-	final Toast<?> other = (Toast<?>) obj;
-	if(!Objects.equals(this.owner, other.owner)) return false;
-	if(!Objects.equals(this.node, other.node)) return false;
-	if(this.alignment != other.alignment) return false;
-	if(this.duration != other.duration) return false;
-	if(!Objects.equals(this.offset, other.offset)) return false;
-	if(this.shown != other.shown) return false;
-	if(this.showing != other.showing) return false;
-	if(this.inQueue != other.inQueue) return false;
-	if(this.cancelled != other.cancelled) return false;
-	return true;
+    public final boolean isShowing() {
+	return showing.get();
     }
 
+    public final ToastQueue getQueue() {
+	return queue.get();
+    }
+
+    public final boolean isCancelled() {
+	return cancelled.get();
+    }  
+    
+    public final Window getOwnerWindow() {
+	return ownerWindowProperty().get();
+    }
+    
+    public final EventHandler<? super ActionEvent> getOnShowing() {
+	return onShowing != null ? onShowing.get() : null;
+    }
+    
+    public final EventHandler<? super ActionEvent> getOnShown() {
+	return onShown != null ? onShown.get() : null;
+    }
+    
+    public final EventHandler<? super ActionEvent> getOnHiding() {
+	return onHiding != null ? onHiding.get() : null;
+    }
+    
+    public final EventHandler<? super ActionEvent> getOnHidden() {
+	return onHidden != null ? onHidden.get() : null;
+    }
+
+    ToastPopup<T> getPopup() {
+	return popup != null ? popup : (popup = ToastPopup.of(this));
+    }
+    
+    //Setters
+
+    final void setShowing(boolean shown) {
+	this.showing.set(shown);
+    }
+
+    final void setQueue(ToastQueue queue) {
+	this.queue.set(queue);
+    }
+
+    final void setOwnerWindow(Window ownerWindow) {
+	this.ownerWindow.set(ownerWindow);
+    }
+    
+    public final void setOnHidden(EventHandler<? super ActionEvent> onHidden) {
+	if(this.onHidden != null || onHidden != null) {
+	    onHiddenProperty().set(onHidden);
+	}
+    }
+    
+    public final void setOnHiding(EventHandler<? super ActionEvent> onHiding) {
+	if(this.onHiding != null || onHiding != null) {
+	    onHidingProperty().set(onHiding);
+	}
+    }
+    
+    public final void setOnShowing(EventHandler<? super ActionEvent> onShowing) {
+	if(this.onShowing != null || onShowing != null) {
+	    onShowingProperty().set(onShowing);
+	}
+    }
+    
+    public final void setOnShown(EventHandler<? super ActionEvent> onShown) {
+	if(this.onShown != null || onShown != null) {
+	    onShownProperty().set(onShown);
+	}
+    }
+    
+    //Property getters
+    
+    public final ReadOnlyBooleanProperty inQueueProperty() {
+	return inQueue.getReadOnlyProperty();
+    }
+    
+    public final ReadOnlyBooleanProperty shownProperty() {
+	return shown.getReadOnlyProperty();
+    }
+    
+    public final ReadOnlyBooleanProperty showingProperty() {
+	return showing.getReadOnlyProperty();
+    }
+    
+    public final ReadOnlyObjectProperty<ToastQueue> queueProperty() {
+	return queue.getReadOnlyProperty();
+    }
+    
+    public final ReadOnlyObjectProperty<Instant> showingTimeProperty() {
+	return showingTime.getReadOnlyProperty();
+    }
+    
+    public final ReadOnlyBooleanProperty cancelledProperty() {
+	return cancelled.getReadOnlyProperty();
+    }   
+    
+    public final ReadOnlyObjectProperty<Window> ownerWindowProperty() {
+	return ownerWindow.getReadOnlyProperty();
+    }
+    
+    public final ReadOnlyObjectWrapper<Window> ownerWindowPropertyImpl() {
+	return ownerWindow;
+    }
+    
+    public final ObjectProperty<EventHandler<? super ActionEvent>> onShowingProperty() {
+	return onShowing != null ? onShowing 
+		: (onShowing = new SimpleObjectProperty<>(this, "onShowing"));
+    }
+    
+    public final ObjectProperty<EventHandler<? super ActionEvent>> onShownProperty() {
+	return onShown != null ? onShown 
+		: (onShown = new SimpleObjectProperty<>(this, "onShown"));
+    }
+    
+    public final ObjectProperty<EventHandler<? super ActionEvent>> onHidingProperty() {
+	return onHiding != null ? onHiding 
+		: (onHiding = new SimpleObjectProperty<>(this, "onHiding"));
+    }
+    
+    public final ObjectProperty<EventHandler<? super ActionEvent>> onHiddenProperty() {
+	return onHidden != null ? onHidden 
+		: (onHidden = new SimpleObjectProperty<>(this, "onHidden"));
+    }
+    
     @Override
     public String toString() {
 	StringBuilder builder = new StringBuilder();
-	builder.append("Toast [owner=").append(owner).
-		append(", node=").append(node).
-		append(", alignment=").append(alignment).
-		append(", duration=").append(duration).
-		append(", ").append(offset);
-	builder.append(", states=");
+	builder.append("Toast [owner: ").append(owner).
+		append(", content: ").append(content).
+		append(", alignment: ").append(alignment).
+		append(", duration: ").append(duration).
+		append(", offset: ").append(offset);
+	
+	builder.append(", states: ");
 	List<String> states = new ArrayList<>();
-	if(shown) states.add("shown");
-	if(showing) states.add("showing");
-	if(cancelled) states.add("cancelled");
-	if(inQueue) states.add("inQueue");
-
+	if(isShown()) states.add("shown");
+	if(isShowing()) states.add("showing");
+	if(isCancelled()) states.add("cancelled");
 	builder.append(states);
+	
 	return builder.toString();
-    }
-
-    public enum Alignment {
-
-	CENTER, LEFT, RIGHT,
-	BOTTOM_LEFT, BOTTOM_CENTER, BOTTOM_RIGHT,
-	TOP_LEFT, TOP_CENTER, TOP_RIGHT;
     }
 
     public final void show() {
 	if(isCancelled()) {
-	    throw new IllegalStateException("Toast alredy cancelled.");
+	    throw new IllegalStateException("Toast already cancelled.");
 	}
 	if(isShown()) {
-	    throw new IllegalStateException("Toast alredy shown.");
+	    throw new IllegalStateException("Toast already shown.");
 	}
-	if(isInQueue()) {
-	    throw new IllegalStateException("Toast alredy in queue.");
+	
+	if(getQueue() != null) {
+	    throw new IllegalStateException(
+		    "This toast in queue. His can`t be showing manually.");
+	} else {
+	    if(getDuration().equals(Duration.ZERO)) {
+		showing.set(true);
+		showing.set(false);
+	    } else {
+		getPopup().show();
+		if(getDuration().lessThan(Duration.INDEFINITE)) {
+		    hidingTimeline = new Timeline(new KeyFrame(
+			    getDuration(), e -> getPopup().hide()));
+		    hidingTimeline.play();
+		}
+	    }
 	}
-
-	onShow();
-	inQueue = true;
-    }
-
-    protected void onShow() {
-    }
-
-    protected void onCancel() {
     }
 
     public final void cancel() {
-	if(isCancelled()) {
-	    throw new IllegalStateException("Toast alredy cancelled.");
+	if(!isCancelled()) {
+	    cancelled.set(true);
+	    ToastQueue localQueue = getQueue();
+	    if(localQueue != null) {
+		localQueue.getToasts().remove(this);
+		queue.set(null);
+	    }
+	    if(popup != null) popup.hide();
+	    if(hidingTimeline != null) {
+		hidingTimeline.stop();
+	    }
 	}
-
-	cancelled = true;
-	inQueue = false;
-	onCancel();
-    }
-
-    public final static class Offset {
-
-	public static final Offset ZERO = new Offset(0, 0);
-	public static final Offset ONE = new Offset(1, 1);
-	public static final Offset TEN = new Offset(10, 10);
-
-	private final double x, y;
-
-	private Offset(double x, double y) {
-	    this.x = x;
-	    this.y = y;
-	}
-
-	public static Offset of(double x, double y) {
-	    if(ZERO.is(x, y)) return ZERO;
-	    if(ONE.is(x, y)) return ONE;
-	    if(TEN.is(x, y)) return TEN;
-	    return new Offset(x, y);
-	}
-
-	public double getY() {
-	    return y;
-	}
-
-	public double getX() {
-	    return x;
-	}
-
-	public boolean is(double x, double y) {
-	    return Double.compare(this.x, x) == 0 &&
-		    Double.compare(this.y, y) == 0;
-	}
-
-	@Override
-	public int hashCode() {
-	    int hash = 3;
-	    hash = 37 * hash + (int) 
-		    (Double.doubleToLongBits(this.x) ^ 
-		    (Double.doubleToLongBits(this.x) >>> 32));
-	    hash = 37 * hash + (int) 
-		    (Double.doubleToLongBits(this.y) ^ 
-		    (Double.doubleToLongBits(this.y) >>> 32));
-	    return hash;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-	    if(obj == null) return false;
-	    if(getClass() != obj.getClass()) return false;
-	    final Offset other = (Offset) obj;
-	    return Double.compare(this.x, other.x) == 0 
-		    && Double.compare(this.y, other.y) == 0;
-	}
-
-	@Override
-	public String toString() {
-	    return "Offset [X=" + x + ", Y=" + y + "]";
-	}
-
-    }
-
-    public enum Duration {
-
-	SHORT(2000), LONG(5000);
-
-	private final int millis;
-
-	private Duration(int millis) {
-	    this.millis = Integers.require(millis, m -> m > 0);
-	}
-
-	public int inMillis() {
-	    return millis;
-	}
-
-    }
-
-    /*
-
-    public static Toast<Screen> of() {
-	return new ScreenToast();
     }
     
-    public static Toast<Screen> of(String text) {
-	return of(text, Alignment.CENTER);
+    //Static initializers
+
+    public static <T> Toast<T> of(T owner, String text) {
+	return of(owner, text, Pos.CENTER);
     }
 
-    public static Toast<Screen> of(String text, Alignment alignment) {
-	return of(text, Duration.SHORT, alignment);
+    public static <T> Toast<T> of(T owner, String text, Pos alignment) {
+	return of(owner, text, DURATION_SHORT, alignment);
     }
 
-    public static Toast<Screen> of(String text, Duration duration) {
-	return of(text, duration, Alignment.CENTER);
+    public static <T> Toast<T> of(T owner, String text, Duration duration) {
+	return of(owner, text, duration, Pos.CENTER);
     }
 
-    public static Toast<Screen> of(String text, Duration duration, Alignment alignment) {
-	ScreenToast t = new ScreenToast();
-	t.setNode(createText(text));
-	t.setAlignment(alignment);
-	t.setDuration(duration);
-	return t;
-    }*/
-
-    public static Toast<Node> of(Node owner, String text) {
-	return of(owner, text, Alignment.CENTER);
+    public static <T> Toast<T> of(T owner, String text, Pos alignment, Point2D offset) {
+	return of(owner, text, DURATION_SHORT, alignment, offset);
     }
 
-    public static Toast<Node> of(Node owner, String text, Alignment alignment) {
-	return of(owner, text, Duration.SHORT, alignment);
+    public static <T> Toast<T> of(T owner, String text, Pos alignment, double x, double y) {
+	return of(owner, text, DURATION_SHORT, alignment, x, y);
     }
 
-    public static Toast<Node> of(Node owner, String text, Duration duration) {
-	return of(owner, text, duration, Alignment.CENTER);
+    public static <T> Toast<T> of(T owner, String text, Duration duration, Pos alignment) {
+	return of(owner, text, duration, alignment, Point2D.ZERO);
     }
 
-    public static Toast<Node> of(Node owner, String text, Duration duration, Alignment alignment) {
-	NodeToast t = new NodeToast(owner);
-	t.setAlignment(alignment);
-	t.setDuration(duration);
-	
-	Label label = createText(text);
-	label.setMaxWidth(owner.getLayoutBounds().getWidth() - 20);
-	t.setNode(label);
-	return t;
+    public static <T> Toast<T> of(T owner, String text, Duration duration, Pos alignment, double x, double y) {
+	return of(owner, text, duration, alignment, new Point2D(x, y));
     }
 
-    public static Toast<Window> of(Window window, String text) {
-	return of(window, text, Alignment.CENTER);
+    public static <T> Toast<T> of(T owner, String text, Duration duration, Pos alignment, Point2D offset) {
+	return Toast.<T>builder().
+		setOwner(owner).
+		setOffset(offset).
+		setDuration(duration).
+		setAlignment(alignment).
+		setContent(createContent(text)).build();
     }
-
-    public static Toast<Window> of(Window window, String text, Alignment alignment) {
-	return of(window, text, Duration.SHORT, alignment);
-    }
-
-    public static Toast<Window> of(Window window, String text, Duration duration) {
-	return of(window, text, duration, Alignment.CENTER);
-    }
-
-    public static Toast<Window> of(Window window, String text, Duration duration, Alignment alignment) {
-	WindowToast t = new WindowToast(window);
-	t.setAlignment(alignment);
-	t.setDuration(duration);
-	
-	Label label = createText(text);
-	label.setMaxWidth(window.getWidth() - 45);
-	t.setNode(label);
-	return t;
-    }
-
-    public static Toast<Window> of(Window window) {
-	return new WindowToast(window);
-    }
-
-    public static Toast<Node> of(Node owner) {
-	return new NodeToast(owner);
-    }
-
-    private static Label createText(String text) {
-	Label l = new Label(text);
-	l.setTextFill(Color.GHOSTWHITE);
-	l.setPadding(new Insets(5));
-	l.setWrapText(true);
-        l.setTextAlignment(TextAlignment.CENTER);
-	return l;
-    }
-
-    private static Label createText(ObservableValue<String> text) {
+    
+    private static Label createLabel() {
 	Label l = new Label();
-        l.textProperty().bind(text);
 	l.setTextFill(Color.GHOSTWHITE);
-	l.setPadding(new Insets(5));
 	l.setWrapText(true);
         l.setTextAlignment(TextAlignment.CENTER);
 	return l;
     }
 
-    public static Toast<Node> getCurrent(Node node) {
-	return NodeToast.getCurrent0(node);
+    public static Label createContent(String text) {
+	Label l = createLabel();
+	l.setText(text);
+	return l;
     }
 
-    public static Toast<Window> getCurrent(Window window) {
-	return WindowToast.getCurrent0(window);
+    public static Label createContent(ObservableValue<String> text) {
+	Label l = createLabel();
+        l.textProperty().bind(text);
+	return l;
     }
 
-    /*public static Toast<Screen> getCurrent() {
-	return ScreenToast.getCurrentToast();
+    /*public static <T extends Node> Toast<T> getCurrent(T owner) {
+	return getCurrentImpl(owner);
+    }
+
+    public static <T extends Window> Toast<T> getCurrent(T owner) {
+	return getCurrentImpl(owner);
+    }
+
+    private static <T> Toast<T> getCurrentImpl(T owner) {
+	Objects.requireNonNull(owner, "owner");
+	CheckedToastQueue<T> queue = (CheckedToastQueue<T>) CheckedToastQueue.getQueues().get(owner);
+	return queue != null ? queue.getCurrentToast() : null;
     }*/
     
-    public static Builder builder() {
-        return new Builder();
+    public static <T> Builder<T> builder() {
+        return new Builder<>();
     }
     
-    public static class Builder {
+    public static class Builder<T> implements javafx.util.Builder<Toast<T>> {
+	
+	private static String toastStylesheet = Toast.class.getResource("Toast.css").toExternalForm();
         
-        private Object owner;
-        private Node node;
+        private T owner;
+        private Node content;
         
-        private Alignment alignment = Alignment.CENTER;
-        private Duration duration = Duration.SHORT;
-        private Offset offset = Offset.ZERO;
+        private Pos alignment = Pos.CENTER;
+        private Duration duration = DURATION_SHORT;
+        private Point2D offset = Point2D.ZERO;
+	
+	private String style;
+	private ObservableList<String> stylesheets = FXCollections.observableArrayList(toastStylesheet);
+	private ObservableList<String> styleClass = FXCollections.observableArrayList("toast");
         
         private Builder() {}
 
-        public Builder setAlignment(Alignment alignment) {
+        public Builder<T> setAlignment(Pos alignment) {
             this.alignment = Objects.requireNonNull(alignment, "alignment");
             return this;
         }
 
-        public Builder setDuration(Duration duration) {
+        public Builder<T> setDuration(Duration duration) {
             this.duration = Objects.requireNonNull(duration, "duration");
             return this;
         }
 
-        public Builder setText(String text) {
-            return setNode(createText(text));
+        public Builder<T> setText(String text) {
+            return setContent(createContent(text));
         }
 
-        public Builder setText(ObservableValue<String> textProperty) {
-            return setNode(createText(textProperty));
+        public Builder<T> setText(ObservableValue<String> textProperty) {
+            return setContent(Toast.createContent(textProperty));
         }
 
-        public Builder setNode(Node node) {
-            this.node = Objects.requireNonNull(node, "node");
+        public Builder<T> setContent(Node content) {
+            this.content = Objects.requireNonNull(content, "content");
             return this;
         }
 
-        public Builder setOffset(Offset offset) {
+        public Builder<T> setOffset(Point2D offset) {
             this.offset = Objects.requireNonNull(offset, "offset");
             return this;
         }
 
-        public Builder setOffset(double x, double y) {
-            return setOffset(Offset.of(x, y));
+        public Builder<T> setOffset(double x, double y) {
+            return setOffset(new Point2D(x, y));
         }
 
-        public Builder setOwner(Object owner) {
+        public Builder<T> setOwner(T owner) {
             Objects.requireNonNull(owner, "owner");
-            
-            if(owner instanceof Window 
-                    || owner instanceof Node) {
-                this.owner = owner;
-            } else {
-                throw new IllegalArgumentException(
-                        "Owner must be instance of Window or Node.");
-            }
+	    if(!ToastPopup.isSupported(owner)) {
+		throw new IllegalArgumentException(
+			"Owner [" + owner + "] not supported by Toast.");
+	    }
+	    this.owner = owner;
             return this;
         }
 
-        public Alignment getAlignment() {
+	public Builder<T> setStyle(String style) {
+	    this.style = style;
+	    return this;
+	}
+
+        public Pos getAlignment() {
             return alignment;
         }
 
@@ -441,41 +468,64 @@ public abstract class Toast<T> {
             return duration;
         }
 
-        public Node getNode() {
-            return node;
+        public Node getContent() {
+            return content;
         }
 
-        public Offset getOffset() {
+        public Point2D getOffset() {
             return offset;
         }
 
-        public Object getOwner() {
+        public T getOwner() {
             return owner;
         }
+
+	public String getStyle() {
+	    return style;
+	}
+
+	public Builder<T> setStylesheets(ObservableList<String> stylesheets) {
+	    Objects.requireNonNull(stylesheets, "stylesheets");
+	    this.stylesheets = stylesheets;
+	    return this;
+	}
+
+	public Builder<T> setStylesheets(String... stylesheets) {
+	    return setStylesheets(FXCollections.observableArrayList(stylesheets));
+	}
+
+	public Builder<T>  setStyleClass(ObservableList<String> styleClass) {
+	    Objects.requireNonNull(styleClass, "styleClass");
+	    this.styleClass = styleClass;
+	    return this;
+	}
+
+	public Builder<T> setStyleClass(String... stylesheets) {
+	    return setStyleClass(FXCollections.observableArrayList(stylesheets));
+	}
+
+	public ObservableList<String> getStylesheets() {
+	    return stylesheets;
+	}
+
+	public ObservableList<String> getStyleClass() {
+	    return styleClass;
+	}
         
-        public Toast<?> show() {
-            Toast<?> toast = build();
+        public Toast<T> show() {
+            Toast<T> toast = build();
             toast.show();
             return toast;
         }
         
-        public Toast<?> build() {
+	@Override
+        public Toast<T> build() {
             Objects.requireNonNull(owner, "owner");
-            Objects.requireNonNull(node, "node");
-            
-            Toast<?> toast;
-            if(owner instanceof Node) {
-                toast = Toast.of((Node) owner);
-            } else {
-                toast = Toast.of((Window) owner);
-            }
-            
-            toast.setAlignment(alignment);
-            toast.setOffset(offset);
-            toast.setDuration(duration);
-            toast.setNode(node);
-            
-            return toast;
+            Objects.requireNonNull(content, "content"); 
+	    
+	    Toast<T> toast = new Toast<>(this);
+	    this.content = null;
+	    return toast;
         }
         
     }
