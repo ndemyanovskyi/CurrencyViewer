@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<fx:root fx:id="root"  
+         type="StackPane" stylesheets="@CurrencyBox.css" xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Button fx:id="titleButton" 
+                text="${controller.field.displayName}"
+                textFill="gray" styleClass="title-button" 
+                onAction="#onAction" onScroll="#onScroll" 
+                onMouseMoved="#onMouseMoved" onMouseExited="#onMouseExited"> 
+            <graphic>
+                <Circle fx:id="indicator" fill="transparent"  
+                        stroke="lightgray" radius="4.0" strokeWidth="3.0" />
+            </graphic>
+        </Button>
+    </children>
+</fx:root>

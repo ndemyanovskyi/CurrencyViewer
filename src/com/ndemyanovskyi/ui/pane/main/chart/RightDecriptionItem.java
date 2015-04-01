@@ -102,7 +102,6 @@ public class RightDecriptionItem extends InitializableStackPane {
                 }
                 
                 double ratio = (double)(now - start) / NANOS_DURATION;
-                System.out.println("ratio = " + ratio);
                 if(ratio > 1) {
                     setPrefHeight(to);
                     stop();

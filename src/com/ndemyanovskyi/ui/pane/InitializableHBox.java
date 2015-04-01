@@ -6,9 +6,9 @@
 
 package com.ndemyanovskyi.ui.pane;
 
+import com.ndemyanovskyi.app.Application;
 import com.ndemyanovskyi.reflection.Reflection;
 import com.ndemyanovskyi.throwable.Exceptions;
-import com.ndemyanovskyi.app.Application;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXMLLoader;
@@ -22,6 +22,8 @@ public class InitializableHBox extends HBox implements Initializable {
 	Class<?> caller = Reflection.getCallerClass();
 	init(caller.getResource(caller.getSimpleName() + ".fxml"));
     }
+    
+    
     
     public InitializableHBox(String parent) {
 	init(Reflection.getCallerClass().getResource(parent));

@@ -9,38 +9,47 @@
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import com.qguest.ui.pane.main.chart.legend.*?>
 
-<fx:root fx:id="root" alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" nodeOrientation="LEFT_TO_RIGHT" onMouseEntered="#onMouseEntered" onMouseExited="#onMouseExited" spacing="8.0" styleClass="background-box" stylesheets="@Legend.css" type="HBox" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+<fx:root fx:id="root" alignment="CENTER" maxHeight="-Infinity" 
+         maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" 
+         nodeOrientation="LEFT_TO_RIGHT" onMouseEntered="#onMouseEntered" 
+         onMouseExited="#onMouseExited" spacing="8.0" 
+         styleClass="background-box" stylesheets="@Legend.css" type="HBox" 
+         xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
     <children>
-        <VBox fx:id="titleBox" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="2.0">
+        <VBox fx:id="titleBox" maxHeight="-Infinity" maxWidth="-Infinity" 
+              minHeight="-Infinity" minWidth="-Infinity" spacing="2.0">
             <children>
-                <Label fx:id="bankLabel" style="-fx-text-fill: gray;" text="${controller.intent.bank.displayName}" />
-                <Line fx:id="colorLine" endX="${titleBox.width - 2}" startX="0.0" stroke="${controller.intent.color}" strokeWidth="2.0" />
-                <HBox fx:id="bottomBox" alignment="CENTER_LEFT" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" spacing="5.0">
+                <Label fx:id="bankLabel" style="-fx-text-fill: gray;" 
+                       text="${controller.intent.bank.displayName}" />
+                <Line fx:id="colorLine" endX="${titleBox.width - 2}" 
+                      startX="0.0" stroke="${controller.intent.color}" 
+                      strokeWidth="2.0" />
+                <HBox fx:id="bottomBox" alignment="CENTER_LEFT" 
+                      maxHeight="-Infinity" maxWidth="-Infinity" 
+                      minHeight="-Infinity" minWidth="-Infinity" 
+                      spacing="5.0">
                     <children>
-                        <Label fx:id="fieldLabel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-text-fill: gray;" text="${controller.intent.field.displayName}">
-                            <font>
-                                <Font size="12.0" />
-                            </font>
-                        </Label>
-                        <Label text="-">
-                            <font>
-                                <Font size="12.0" />
-                            </font>
-                        </Label>
-                        <Label fx:id="currencyLabel" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" style="-fx-text-fill: gray;" text="${controller.intent.currency}">
-                            <font>
-                                <Font size="12.0" />
-                            </font>
-                        </Label>
+                        <Label fx:id="fieldLabel" 
+                               text="${controller.intent.field.displayName}" 
+                               style="-fx-text-fill: gray; -fx-text-size: 100%;" 
+                               maxHeight="-Infinity" maxWidth="-Infinity" 
+                               minHeight="-Infinity" minWidth="-Infinity" />
+                        <Label text="-" />
+                        <Label fx:id="currencyLabel" 
+                               text="${controller.intent.currency}" 
+                               style="-fx-text-fill: gray; -fx-text-size: 100%;" 
+                               maxHeight="-Infinity" maxWidth="-Infinity" 
+                               minHeight="-Infinity" minWidth="-Infinity" />
                     </children>
                 </HBox>
             </children>
         </VBox>
-        <StackPane fx:id="progressClosePane" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0">
+        <StackPane fx:id="progressClosePane" maxHeight="20.0" maxWidth="20.0" 
+                   minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0">
             <children>
-                <ProgressIndicator fx:id="progressIndicator" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" progress="0.0">
+                <ProgressIndicator fx:id="progressIndicator" maxHeight="20.0" maxWidth="20.0"
+                                   minHeight="20.0" minWidth="20.0" prefHeight="20.0" prefWidth="20.0" progress="0.0">
                     <StackPane.margin>
                         <Insets />
                     </StackPane.margin>
@@ -48,7 +57,10 @@
                         <Insets bottom="-22.0" />
                     </padding>
                 </ProgressIndicator>
-                <Button fx:id="closeButton" alignment="CENTER" contentDisplay="CENTER" graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" minWidth="20.0" mnemonicParsing="false" onAction="#onButtonCloseAction" opacity="0.0" prefHeight="20.0" prefWidth="20.0" styleClass="close-button" />
+                <Button fx:id="closeButton" alignment="CENTER" contentDisplay="CENTER" 
+                        graphicTextGap="0.0" maxHeight="20.0" maxWidth="20.0" minHeight="20.0" 
+                        minWidth="20.0" mnemonicParsing="false" onAction="#onButtonCloseAction" 
+                        opacity="0.0" prefHeight="20.0" prefWidth="20.0" styleClass="close-button" />
             </children>
         </StackPane>
     </children>

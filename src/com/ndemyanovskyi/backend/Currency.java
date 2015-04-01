@@ -22,7 +22,7 @@ public enum Currency {
     public static final String RESOURCE_PERFIX = "currency_";
     
     private static final Set<Currency> DEFAULT_VALUES = 
-	    Unmodifiable.set(USD, EUR, RUB, GBP, CHF);
+	    Unmodifiable.sortedSet(USD, EUR, RUB, GBP, CHF);
     
     private final ReadOnlyProperty<String> displayName = 
             ResourceBindings.strings().get(RESOURCE_PERFIX + name());

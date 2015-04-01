@@ -8,17 +8,42 @@
 <?import javafx.scene.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.stage.*?>
 <?import com.ndemyanovskyi.ui.pane.main.chart.*?>
+<?import com.ndemyanovskyi.app.*?>
 
-<BorderPane maxHeight="-Infinity" stylesheets="@MainPane.css" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1">
+
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" stylesheets="@MainPane.css"  
+            minHeight="300.0" minWidth="600.0" 
+            prefHeight="600.0" prefWidth="900.0"
+            onMouseEntered="#onMouseEntered" onMouseExited="#onMouseExited" 
+            xmlns="http://javafx.com/javafx/8" >
+    <fx:define>
+        <Scaling fx:id="scaling" fx:constant="INSTANCE" />
+    </fx:define>    
     <center>
         <ChartPane fx:id="chartPane" layoutX="0.0" layoutY="0.0" prefHeight="400.0" prefWidth="400.0" />
     </center>
-   <top>
-      <HBox BorderPane.alignment="CENTER">
-         <children>
-            <Button styleClass="settings-button" text="::{settings}" />
-         </children>
-      </HBox>
-   </top>
+    <top>
+        <HBox BorderPane.alignment="CENTER">
+            <children>
+                <Button styleClass="forecast-button" text="::{forecast}" />
+                <Button styleClass="converter-button" text="::{converter}" />
+                <Button styleClass="settings-button" text="::{settings}" />
+            </children>
+        </HBox>
+    </top>
+    <left>
+        <VBox spacing="${5 * scaling.scale}" >
+            <children>
+                <Label text="::{banks}" textFill="gray" style="-fx-font-size: 200%;"> 
+                </Label>
+                <ScrollPane styleClass="bank-item-box" vbarPolicy="AS_NEEDED" hbarPolicy="NEVER" fitToWidth="true"  > 
+                    <content>
+                        <VBox fx:id="bankItemBox" /> 
+                    </content>
+                </ScrollPane>
+            </children>
+        </VBox>
+    </left>
 </BorderPane>

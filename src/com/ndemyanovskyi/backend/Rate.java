@@ -226,6 +226,11 @@ public class Rate implements Comparable<Rate> {
                     && Objects.equals(getResourceName(), other.getResourceName());
         }
 
+        @Override
+        public String toString() {
+            return getName();
+        }
+
     }
 
 }

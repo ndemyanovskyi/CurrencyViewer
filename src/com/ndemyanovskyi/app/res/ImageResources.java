@@ -7,21 +7,46 @@
 package com.ndemyanovskyi.app.res;
 
 import com.ndemyanovskyi.app.localization.Language;
+import com.ndemyanovskyi.util.BiConverter;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.function.Predicate;
 import javafx.scene.image.Image;
 
 
 public final class ImageResources extends FileResources<Image> {
     
+    private static final String EXTENSION = "png";
+    
+    private static final Predicate<String> PREDICATE = key -> key.toLowerCase().endsWith("." + EXTENSION);
+    
+    private static final BiConverter<String, String> KEY_CONVERTER = new BiConverter<String, String>() {
+
+        @Override
+        public String to(String key) {
+            if(PREDICATE.test(key)) {
+                return key.substring(0, key.length() - EXTENSION.length() - 1);
+            }
+            return key;
+        }
+
+        @Override
+        public String from(String key) {
+            if(!PREDICATE.test(key)) {
+                return key + "." + EXTENSION;
+            }
+            return key;
+        }
+    };
+    
     ImageResources(Language language) {
-	super(language, "images");
+	super(language, "images", PREDICATE, KEY_CONVERTER);
     }
 
     @Override
-    protected Image read(File file) throws IOException {
-	return new Image(new FileInputStream(file));
+    protected Image readFile(File file) throws IOException {
+	return new Image(new FileInputStream(file), 0, 0, false, true);
     }
 
     /*@Override

@@ -1,15 +1,60 @@
-.settings-button {
+.converter-button, .forecast-button, .settings-button {
     -fx-background-color: transparent;
-    -fx-graphic: url("./settings.png");
     -fx-text-fill: gray;
     -fx-font-size: 18pt;
     -fx-graphic-text-gap: 10;
 }
 
-.settings-button:hover {
+.settings-button {
+    -fx-graphic: url("./settings.png");
+}
+
+.forecast-button {
+    -fx-graphic: url("./forecast.png");
+}
+
+.converter-button {
+    -fx-graphic: url("./converter.png");
+}
+
+.converter-button:hover, .forecast-button:hover, .settings-button:hover {
     -fx-background-color: rgba(0, 0, 0, 0.05);
 }
 
-.settings-button:pressed {
+.converter-button:pressed, .forecast-button:pressed, .settings-button:pressed {
     -fx-background-color: rgba(0, 0, 0, 0.1);
+}
+
+.bank-item-box .scroll-pane {
+    -fx-background-color: transparent;
+}
+
+.bank-item-box:focused {
+    -fx-background-color: -fx-outer-border, -fx-inner-border, -fx-body-color; 
+    -fx-background-insets: 0, 1, 1;
+}
+
+.bank-item-box .scroll-bar .increment-button {
+    visibility: hidden;
+}
+
+.bank-item-box .scroll-bar .decrement-button {
+    visibility: hidden;
+}
+
+.bank-item-box .scroll-bar:vertical {
+    -fx-background-color: whitesmoke;
+}
+
+.bank-item-box .scroll-bar:vertical .track-background {
+    visibility: hidden;
+}
+
+.bank-item-box .scroll-bar:vertical .track {
+    visibility: hidden;
+}
+
+.bank-item-box .scroll-bar:vertical .thumb {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+    -fx-background-radius: 10;
 }

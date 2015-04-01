@@ -18,9 +18,9 @@ import com.ndemyanovskyi.derby.Row;
 import com.ndemyanovskyi.map.HashPool;
 import com.ndemyanovskyi.map.Pool;
 import java.time.LocalDate;
-import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
+import java.util.TreeSet;
 import javafx.beans.property.ReadOnlyProperty;
 
 
@@ -36,7 +36,7 @@ public abstract class Bank<R extends Rate> {
 		if(!Bank.class.isAssignableFrom((Class) o)) {
 		    throw new IllegalArgumentException("Key must be assignable from Bank.");
 		}
-		return new UnmodifiableSetWrapper<>(new HashSet<>());
+		return new UnmodifiableSetWrapper<>(new TreeSet<>((a, b) -> a.getName().compareTo(b.getName())));
 	    });
     
     public static final NationalBank NBU = new NationalBank("NBU", Currency.values(), Site.NBU);

@@ -5,9 +5,10 @@
  */
 package com.ndemyanovskyi.ui.pane;
 
+import com.ndemyanovskyi.app.Application;
+import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.reflection.Reflection;
 import com.ndemyanovskyi.throwable.Exceptions;
-import com.ndemyanovskyi.app.Application;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXMLLoader;
@@ -31,6 +32,7 @@ public class InitializableStackPane extends StackPane implements Initializable {
 	loader.setController(this);
         
 	Exceptions.execute(() -> loader.load());
+        ResourceBindings.register(this);
     }
 
     public Application getApplication() {

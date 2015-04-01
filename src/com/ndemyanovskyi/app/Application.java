@@ -8,32 +8,32 @@ package com.ndemyanovskyi.app;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.localization.binding.Translation;
 import com.ndemyanovskyi.reflection.Types;
-import java.awt.AWTException;
-import java.awt.SystemTray;
-import java.awt.TrayIcon;
 import java.lang.Thread.UncaughtExceptionHandler;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.Iterator;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.beans.property.ReadOnlyProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
-import javafx.embed.swing.SwingFXUtils;
 import javafx.event.EventHandler;
+import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import javafx.stage.WindowEvent;
+import javafx.util.Duration;
+import org.controlsfx.control.Notifications;
 
 public final class Application extends javafx.application.Application {
     
@@ -99,12 +99,12 @@ public final class Application extends javafx.application.Application {
     @Override
     public void init() throws Exception {
         checkSecondInit(content);
-        content = manifest.get(Manifest.MAIN_CONTENT_TYPE).newInstance();
+        content = manifest.get(Manifest.MAIN_CONTENT).newInstance();
         initErrorHandler();
     }
 
     private void initErrorHandler() throws Exception {
-        Class<EventHandler<? super ErrorEvent>> type = manifest.get(Manifest.ERROR_HANDLER_TYPE);
+        Class<EventHandler<? super ErrorEvent>> type = manifest.get(Manifest.ERROR_HANDLER);
 
         if(type == null) {
             if(content instanceof EventHandler) {
@@ -130,21 +130,27 @@ public final class Application extends javafx.application.Application {
         checkSecondInit(mainStage);
         try {            
             mainStage = stage;
-            StageStyle style = manifest.get(Manifest.MAIN_STAGE_STYLE);
-            if(style != null) stage.initStyle(style);
             Scene scene = new Scene(content);
             stage.setScene(scene);
             
-            ReadOnlyProperty<Image> icon = manifest.get(Manifest.APP_ICON_RESOURCE);
-            if(icon != null) {
-                stage.getIcons().add(0, icon.getValue());
+            Set<ReadOnlyObjectProperty<Image>> icons = manifest.get(Manifest.APP_ICON);
+            if(icons != null) {
+		icons.forEach(icon -> 
+			stage.getIcons().add(icon.get()));
             }
-            ReadOnlyProperty<String> name = manifest.get(Manifest.APP_NAME_RESOURCE);
+            ReadOnlyProperty<String> name = manifest.get(Manifest.APP_NAME);
             if(name != null) {
                 stage.titleProperty().bind(name);
             }
             stage.show();
-            
+	    Application.execute(() -> {
+		Notifications.create().
+			owner(stage).
+			hideAfter(Duration.millis(6000)).
+			text("Some Text").
+			position(Pos.TOP_LEFT).
+			showInformation();
+	    });
             resourceRegistrator = new ResourceRegistrator();
         } catch(Throwable ex) {
             LOG.log(Level.SEVERE, "Error in application start: ", ex);
@@ -188,10 +194,6 @@ public final class Application extends javafx.application.Application {
             throw new IllegalStateException(
                     "This method can`t be launched secondly.");
         }
-    }
-
-    private static void initTrayIcon(Stage stage, boolean enable) throws AWTException {
-        SystemTray.getSystemTray().add(new TrayIcon(SwingFXUtils.fromFXImage(null, null), STYLESHEET_MODENA, null));
     }
 
     public static Window getFocusedWindow() {

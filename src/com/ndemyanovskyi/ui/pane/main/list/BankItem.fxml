@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import com.ndemyanovskyi.ui.pane.main.list.*?>
+<?import com.ndemyanovskyi.backend.*?>
+<?import com.ndemyanovskyi.backend.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.image.*?>
+
+<fx:root xmlns:fx="http://javafx.com/fxml/1" fx:id="root" type="VBox" 
+         style="-fx-background-color: rgb(252, 252, 252);"
+         xmlns="http://javafx.com/javafx/8" >
+    <children>
+        <HBox spacing="5.0" >
+            <children>
+                <ImageView fx:id="logoImageView" fitWidth="30.0" fitHeight="30.0" />
+                <Label fx:id="bankLabel" text="${controller.bank.displayName}" textFill="gray">
+                    <font>
+                        <Font size="20" />
+                    </font>
+                </Label>
+            </children>
+        </HBox>
+        <HBox fx:id="currencyBoxes" alignment="CENTER_LEFT" />
+        <Line endX="${root.width - 20}" stroke="lightgray" startX="10" />
+    </children>
+    <padding>
+        <Insets bottom="10" left="10" right="10" top="10" />
+    </padding>
+</fx:root>

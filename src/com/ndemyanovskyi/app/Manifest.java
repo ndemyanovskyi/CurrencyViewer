@@ -9,25 +9,28 @@ package com.ndemyanovskyi.app;
 
 
 import com.ndemyanovskyi.app.Manifest.Key;
+import com.ndemyanovskyi.app.localization.binding.ImageResourceBindings;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.res.Resources;
+import com.ndemyanovskyi.collection.set.ArrayListedSet;
 import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMap;
 import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMapWrapper;
 import com.ndemyanovskyi.reflection.Types;
 import com.ndemyanovskyi.throwable.Exceptions;
 import com.ndemyanovskyi.util.Converter;
 import com.ndemyanovskyi.util.ThrowableConverter;
+import com.ndemyanovskyi.util.Unmodifiable;
 import java.io.InputStream;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import javafx.beans.property.ReadOnlyObjectProperty;
 import javafx.event.EventHandler;
 import javafx.scene.Parent;
 import javafx.scene.image.Image;
-import javafx.stage.StageStyle;
 import javax.xml.parsers.DocumentBuilderFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
@@ -36,8 +39,8 @@ import org.w3c.dom.NodeList;
 
 public final class Manifest extends UnmodifiableMap<Key<?>, Object> {
     
-    public static final Key<Class<? extends Parent>> MAIN_CONTENT_TYPE = 
-            new Key<>("main_content_type", text -> {
+    public static final Key<Class<? extends Parent>> MAIN_CONTENT = 
+            new Key<>("main_content", text -> {
         Class<?> type = Class.forName(text);
         if(Parent.class.isAssignableFrom(type)) {
             return (Class<? extends Parent>) type;
@@ -46,11 +49,8 @@ public final class Manifest extends UnmodifiableMap<Key<?>, Object> {
                 "Class " + type.getName() + " can`t be cast to Class<? extends Parent>.");
     });
     
-    public static final Key<StageStyle> MAIN_STAGE_STYLE = 
-            new Key<>("main_stage_style", text -> StageStyle.valueOf(text.toUpperCase()));
-    
-    public static final Key<Class<EventHandler<? super ErrorEvent>>> ERROR_HANDLER_TYPE = 
-            new Key<>("error_handler_type", text -> {
+    public static final Key<Class<EventHandler<? super ErrorEvent>>> ERROR_HANDLER = 
+            new Key<>("error_handler", text -> {
         Class<?> clazz = Class.forName(text);
         Type type = Types.resolveGenericType(EventHandler.class, clazz);
         if(type instanceof ParameterizedType) {
@@ -65,11 +65,31 @@ public final class Manifest extends UnmodifiableMap<Key<?>, Object> {
                 "Class " + clazz.getName() + " can`t be cast to Class<EventHandler<? super ErrorEvent>>.");
     });
     
-    public static final Key<ReadOnlyObjectProperty<Image>> APP_ICON_RESOURCE = 
-            new Key<>("app_icon_resource", text -> ResourceBindings.images().get(text));
+    public static final Key<Set<ReadOnlyObjectProperty<Image>>> APP_ICON
+	    = new Key<>("app_icon", text -> {
+		Set<ReadOnlyObjectProperty<Image>> set = new ArrayListedSet<>();
+		ImageResourceBindings images = ResourceBindings.images();
+		int[] sizes = { 8, 16, 32, 36, 16, 64, 72, 128, 256 };
+
+		for(int size : sizes) {
+		    String name = text + size + "x" + size;
+		    if(images.containsKey(name)) {
+			set.add(images.get(name));
+		    }
+		}
+		if(images.containsKey(text)) {
+		    set.add(images.get(text));
+		}
+
+		if(images.isEmpty()) {
+		    throw new IllegalArgumentException(
+			    "Images with prefix '" + text + "' does not found.");
+		}
+		return Unmodifiable.set(set);
+	    });
     
-    public static final Key<ReadOnlyObjectProperty<String>> APP_NAME_RESOURCE = 
-            new Key<>("app_name_resource", text -> ResourceBindings.strings().get(text));
+    public static final Key<ReadOnlyObjectProperty<String>> APP_NAME = 
+            new Key<>("app_name", text -> ResourceBindings.strings().get(text));
     
     private static final Manifest INSTANCE = new Manifest();
 

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.effect.*?>
+<?import javafx.scene.shape.*?>
+
+<fx:root type="StackPane" id="root" alignment="CENTER" 
+         stylesheets="@CurrencyBoxPopupContent.css" opacity="0.0" 
+         xmlns:fx="http://javafx.com/fxml/1">
+    <children>
+        <Pane fx:id="backgroundPane"
+              prefHeight="${content.height}" prefWidth="${content.width}" mouseTransparent="true" 
+              style="-fx-background-color: whitesmoke; -fx-background-radius: 10;" >
+            <effect>
+                <DropShadow blurType="TWO_PASS_BOX" color="rgba(0, 0, 0, 0.3)"  height="132.95" radius="65.975" width="132.95" />
+            </effect>
+        </Pane>
+        <VBox fx:id="innerContent" spacing="5.0" >
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="4.0"  >
+                    <children>
+                        <Circle translateY="1"  fx:id="indicator" fill="transparent"  
+                                stroke="lightgray" radius="4.0" strokeWidth="3.0" />
+                        <Label fx:id="fieldLabel" textFill="gray" />
+                        <Button fx:id="clearButton" styleClass="clear-button" onAction="#onClearButtonAction"> 
+                            <tooltip>
+                                <Tooltip text="::{unmark_all}"/>
+                            </tooltip>
+                        </Button>
+                    </children>
+                </HBox>
+                <GridPane fx:id="intentButtonPane" vgap="5.0" hgap="5.0" />
+            </children>
+            <padding>
+                <Insets top="10.0" bottom="10.0" left="10.0" right="10.0" />
+            </padding>
+        </VBox>
+    </children>
+</fx:root>

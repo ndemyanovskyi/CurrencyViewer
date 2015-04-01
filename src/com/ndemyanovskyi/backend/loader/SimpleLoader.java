@@ -14,6 +14,8 @@ import java.io.IOException;
 public abstract class SimpleLoader<R> extends AbstractLoader<R> {
 
     private final Object lock = new Object();
+    
+    private RuntimeException runtimeException;
 
     @Override
     protected void execute() {
@@ -24,7 +26,9 @@ public abstract class SimpleLoader<R> extends AbstractLoader<R> {
                     onStart();
                     try {
                         setResult(load());
-                    } catch(IOException ex) {
+                    } catch(RuntimeException ex) {
+			runtimeException = ex;
+		    } catch(IOException ex) {
                         setException(ex);
                     }
                     setFinished(true);
@@ -45,6 +49,10 @@ public abstract class SimpleLoader<R> extends AbstractLoader<R> {
         return lock;
     }
 
+    public RuntimeException getRuntimeException() {
+	return runtimeException;
+    }
+
     @Override
     public R sync() throws IOException {
         execute();
@@ -56,10 +64,16 @@ public abstract class SimpleLoader<R> extends AbstractLoader<R> {
                 } catch(InterruptedException ex) {}
             }
         }
-        
-        IOException ex = getException();
-        if(ex != null) throw ex;
+	
+        throwIfNeeded();
         return getResult();
+    }
+    
+    private void throwIfNeeded() throws IOException {
+        IOException ioEx = getException();
+        if(ioEx != null) throw ioEx;
+        RuntimeException rtEx = getRuntimeException();
+        if(rtEx != null) throw rtEx;
     }
     
 }

@@ -10,40 +10,27 @@ import com.ndemyanovskyi.backend.Bank;
 import com.ndemyanovskyi.backend.Currency;
 import com.ndemyanovskyi.backend.Rate;
 import com.ndemyanovskyi.backend.Rate.Field;
-import com.ndemyanovskyi.util.beans.collections.ObservableSortedSetWrapper;
-import java.util.Comparator;
+import com.ndemyanovskyi.collection.set.ArrayListedSet;
+import com.sun.javafx.collections.ObservableSetWrapper;
 import java.util.Iterator;
-import java.util.TreeSet;
 import javafx.beans.property.ReadOnlyProperty;
 
 /**
  *
  * @author Назарій
  */
-public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
-
-    public static final Comparator<Intent<?>> COMPARATOR = 
-            (a, b) -> {
-                int res = a.getInstant().compareTo(b.getInstant());
-                if(res != 0) return res;
-                res = a.getBank().getName().compareTo(b.getBank().getName());
-                if(res != 0) return res;
-                res = a.getCurrency().compareTo(b.getCurrency());
-                if(res != 0) return res;
-                res = a.getField().getName().compareTo(b.getField().getName());
-                return res;
-            };
+public final class Intents extends ObservableSetWrapper<Intent<?>> {
     
-    private final ReadOnlyProperty<Number> maxSeriesCount = 
+    private static final ReadOnlyProperty<Number> MAX_SERIES_COUNT = 
             ResourceBindings.numbers().get("max_series_count");
     
     public Intents() {
-        super(new TreeSet<>(COMPARATOR));
-        maxSeriesCount.addListener(p -> truncate());
+        super(new ArrayListedSet<>());
+        MAX_SERIES_COUNT.addListener(p -> truncate());
     }
     
     private void truncate() {
-        int difference = size() - maxSeriesCount.getValue().intValue();
+        int difference = size() - MAX_SERIES_COUNT.getValue().intValue();
         Iterator<Intent<?>> it = iterator();
         while(difference-- > 0 && it.hasNext()) {
             it.next();
@@ -52,11 +39,12 @@ public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
     }
     
     private void truncateForAdd() {
-        int difference = size() - maxSeriesCount.getValue().intValue();
+        int difference = size() - MAX_SERIES_COUNT.getValue().intValue();
         Iterator<Intent<?>> it = iterator();
         while(difference-- >= 0 && it.hasNext()) {
-            it.next();
+            Intent<?> intent = it.next();
             it.remove();
+	    intent.setAttached(false);
         }
     }
 
@@ -65,7 +53,6 @@ public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
     }
 
     public <R extends Rate> Intent<R> add(Bank<R> bank, Currency currency, Field field) {
-        truncateForAdd();
         Intent<R> intent = get(bank, currency, field);
         if(intent == null) {
             intent = new Intent<>(bank, currency, field);
@@ -73,6 +60,15 @@ public final class Intents extends ObservableSortedSetWrapper<Intent<?>> {
             add(intent);
         }
         return intent;
+    }
+
+    @Override
+    public boolean add(Intent<?> o) {
+        truncateForAdd();
+        Intent<?> intent = get(o);
+        if(intent != null) remove(intent);
+        o.setAttached(true);
+        return super.add(o);
     }
      
     public Intent<?> get(Object o) {

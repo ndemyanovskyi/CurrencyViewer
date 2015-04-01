@@ -106,7 +106,7 @@ public final class DataManager {
             getDatabase().queryUpdate(bank.getDatabaseHelper().getInsertSql(table, rate));
         } catch(RuntimeSQLException ex) {
             SQLException sqlCause = Database.Utils.extractCause(ex);
-            LOG.log(Level.SEVERE, "Rate(" + rate + ") does not writed.", ex);
+            LOG.log(Level.SEVERE, "Rate(" + rate + ") does not writed: Message: " + ex);
             switch(sqlCause.getSQLState()) {
                 
                 case "23505": //Duplicate value

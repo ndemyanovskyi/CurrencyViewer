@@ -47,7 +47,7 @@ public class Task<R extends Rate> {
 
             UNKNOWN(Source.UNKNOWN),
             ERROR_INTERNET_CONNECTION(Source.INTERNET),
-            DATABASE_ALREADY_LOADED(Source.DATABASE, ""),
+            DATABASE_ALREADY_LOADED(Source.DATABASE, "XSDB6"),
             DATABASE_LOCK_FAIL(Source.DATABASE, "40XL1"),
             INCORRECT_DOCUMENT(Source.INTERNET);
             
@@ -91,14 +91,15 @@ public class Task<R extends Rate> {
                 if(exception instanceof DocumentParseException) {
                     return INCORRECT_DOCUMENT;
                 }
-                if(exception instanceof SQLException) {
-                    SQLException sqlCause = Database.Utils.extractCause(exception);
-                    for(Type type : values(Source.DATABASE)) {
-                        if(type.state().equals(sqlCause.getSQLState())) {
-                            return type;
-                        }
-                    }
-                }
+		
+		SQLException sqlCause = Database.Utils.extractCause(exception);
+		if(sqlCause != null) {
+		    for(Type type : values(Source.DATABASE)) {
+			if(type.state().equals(sqlCause.getSQLState())) {
+			    return type;
+			}
+		    }
+		}
                 return UNKNOWN;
             }
             
@@ -114,6 +115,7 @@ public class Task<R extends Rate> {
         
         public Cause(Throwable exception) {
             this(Type.valueOf(exception), exception);
+	    System.out.println("TYPE = " + getType());
         }
 
         public Throwable getException() {
@@ -167,10 +169,9 @@ public class Task<R extends Rate> {
             try {
                 execute();
             } catch(RuntimeException ex) {
-                Logger.getGlobal().log(Level.SEVERE, "", ex);
                 onError(new Cause(ex));
             }
-        });
+        }, toString());
         thread.start();
     }
 
@@ -312,8 +313,8 @@ public class Task<R extends Rate> {
                 });
             } catch(IOException ex) {
                 LOG.log(Level.SEVERE, String.format(
-                        "Fail load rate: bank: %s, currency: %s, date: %s.", 
-                        getBank(), getCurrency(), date), ex);
+                        "Fail load rate: bank: %s, currency: %s, date: %s. Message: %s", 
+                        getBank(), getCurrency(), date, ex));
                 failurePeriodBuilder.plusDate(date);
                 Cause cause = new Cause(ex);
                 Application.execute(() -> {
@@ -393,5 +394,10 @@ public class Task<R extends Rate> {
 
     protected void onError(Cause cause) {
     } 
+
+    @Override
+    public String toString() {
+	return "Task [bank: " + getBank() + ", currency: " + getCurrency() + "]";
+    }
     
 }

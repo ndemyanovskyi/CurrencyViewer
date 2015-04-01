@@ -94,7 +94,7 @@ public abstract class ValueResources<T> extends Resources<T> {
     @Override
     public abstract ValueResources<T> getDefaultResources();
 
-    public final void read() {
+    private final void read() {
 	if(Files.exists(getPath())) {
 	    DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 	    try {

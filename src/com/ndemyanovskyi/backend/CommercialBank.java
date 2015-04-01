@@ -9,7 +9,6 @@ package com.ndemyanovskyi.backend;
 import static com.ndemyanovskyi.backend.ExchangeRate.BUY;
 import static com.ndemyanovskyi.backend.ExchangeRate.SALE;
 import com.ndemyanovskyi.backend.Rate.Field;
-import static com.ndemyanovskyi.backend.Rate.RATE;
 import com.ndemyanovskyi.backend.site.BankSite;
 import com.ndemyanovskyi.derby.Row;
 import static com.ndemyanovskyi.throwable.Exceptions.ignore;
@@ -55,7 +54,7 @@ public class CommercialBank extends Bank<ExchangeRate> {
 	
     };
     
-    private static final Set<Field> FIELDS = Unmodifiable.set(BUY, SALE, RATE);
+    private static final Set<Field> FIELDS = Unmodifiable.set(BUY, SALE);
 
     public CommercialBank(String tag, Set<Currency> currencySet) {
 	this(tag, currencySet, null);

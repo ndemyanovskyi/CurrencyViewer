@@ -15,7 +15,6 @@ import com.ndemyanovskyi.app.res.Resources;
 import com.ndemyanovskyi.map.unmodifiable.UnmodifiableMap;
 import com.ndemyanovskyi.reflection.Types;
 import com.ndemyanovskyi.throwable.Exceptions;
-import com.ndemyanovskyi.ui.pane.button.ImageButton;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
@@ -32,7 +31,9 @@ import javafx.beans.property.ReadOnlyProperty;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Control;
 import javafx.scene.control.Labeled;
+import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
@@ -143,15 +144,7 @@ public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyObjectP
             registerByAnnotations(o);
             if(o instanceof Window) {
                 if(o instanceof Stage) {
-                    Stage stage = (Stage) o;
-                    String text = stage.getTitle();
-                    if(text != null) {
-                        StringExpression exp = StringExpressionParser.parse(text);
-                        if(exp != null) {
-                            stage.titleProperty().unbind();
-                            stage.titleProperty().bind(exp);
-                        }
-                    }
+                    registerProperty(((Stage) o).titleProperty());
                 }
                 o = ((Window) o).getScene();
             }
@@ -292,17 +285,26 @@ public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyObjectP
         }
     }
     
+    private static void registerProperty(Property<String> property) {
+        String text = property.getValue();
+        if(text != null) {
+            StringExpression exp
+                    = StringExpressionParser.parse(text);
+            if(exp != null) {
+                property.unbind();
+                property.bind(exp);
+            }
+        }
+    }
+    
     private static void registerNode(Node node) {
-        if(node instanceof Labeled) {
-            Labeled label = (Labeled) node;
-            String text = label.getText();
-            if(text != null) {
-                StringExpression exp
-                        = StringExpressionParser.parse(text);
-                if(exp != null) {
-                    label.textProperty().unbind();
-                    label.textProperty().bind(exp);
-                }
+        if(node instanceof Control) {
+            Tooltip tooltip = ((Control) node).getTooltip();
+            if(tooltip != null) {
+                registerProperty(tooltip.textProperty());
+            }
+            if(node instanceof Labeled) {
+                registerProperty(((Labeled) node).textProperty());
             }
         } else if(node instanceof Parent) {
             registerParent((Parent) node);
@@ -313,11 +315,6 @@ public class ResourceBindings<T> extends UnmodifiableMap<String, ReadOnlyObjectP
         for(Node node : parent.getChildrenUnmodifiable()) {
             registerNode(node);
         }
-    }
-
-    public static void bind(ImageButton node, String normalResourceName, String pressedResourceName) {
-        images().bind(node.normalImageProperty(), normalResourceName);
-        images().bind(node.pressedImageProperty(), pressedResourceName);
     }
 
 }

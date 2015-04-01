@@ -10,11 +10,12 @@
 <?import javafx.scene.layout.*?>
 <?import com.ndemyanovskyi.ui.pane.*?>
 
-<fx:root xmlns:fx="http://javafx.com/fxml/1" fx:id="root" type="StackPane" xmlns="http://javafx.com/javafx/8" >
+<fx:root xmlns:fx="http://javafx.com/fxml/1" fx:id="root" 
+         type="StackPane" xmlns="http://javafx.com/javafx/8" >
     <children>
-        <Pane fx:id="backgroundPane" style="-fx-background-radius: 10; -fx-background-color: rgb(50, 50, 50);" >
+        <Pane fx:id="backgroundPane" style="-fx-background-radius: 10; -fx-background-color: whitesmoke;" >
             <effect>
-                <DropShadow blurType="TWO_PASS_BOX" height="132.95" radius="65.975" width="132.95" />
+                <DropShadow blurType="TWO_PASS_BOX" color="rgba(0, 0, 0, 0.5)"  height="132.95" radius="65.975" width="132.95" />
             </effect>
         </Pane>
         <VBox>

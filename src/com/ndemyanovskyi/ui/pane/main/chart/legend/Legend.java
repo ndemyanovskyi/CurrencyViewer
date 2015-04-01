@@ -57,7 +57,8 @@ public final class Legend extends InitializableHBox {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         progressProperty().addListener((property, oldProgress, newProgress) -> {
-            if(newProgress.intValue() == 1) {
+            System.out.println(newProgress);
+            if(newProgress.doubleValue() == 1.0d) {
                 showCloseButton();
             }
         });

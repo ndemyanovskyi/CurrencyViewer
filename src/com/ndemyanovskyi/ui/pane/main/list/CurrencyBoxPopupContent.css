@@ -1,0 +1,39 @@
+.clear-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-graphic: url("./clear.png");
+}
+
+.clear-button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+}
+
+.clear-button:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+}
+
+.intent-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-pref-width: 75;
+    -fx-text-fill: gray;
+    -fx-border-radius: 15;
+    -fx-border-color: transparent;
+}
+
+.intent-button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+}
+
+.intent-button:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+}
+
+.intent-button:disabled {
+    -fx-background-color: rgba(0, 0, 0, 0.0);
+    -fx-opacity: 1.0;
+}
+
+.intent-button:selected {
+    -fx-border-color: green;
+}

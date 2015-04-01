@@ -6,40 +6,58 @@
 package com.ndemyanovskyi.ui.pane.main;
 
 import com.ndemyanovskyi.backend.Bank;
-import com.ndemyanovskyi.backend.Currency;
-import com.ndemyanovskyi.backend.DataManager;
 import com.ndemyanovskyi.ui.pane.DelayedResizePane;
 import com.ndemyanovskyi.ui.pane.main.chart.ChartPane;
-import java.time.LocalDate;
+import com.ndemyanovskyi.ui.pane.main.list.BankItem;
+import com.ndemyanovskyi.ui.pane.main.list.Intention;
+import static com.ndemyanovskyi.ui.pane.main.list.Intention.Action.ADD;
+import static com.ndemyanovskyi.ui.pane.main.list.Intention.Action.REMOVE;
 import javafx.fxml.FXML;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.VBox;
 
 /**
  * FXML Controller class
  *
  * @author Назарій
  */
-public class MainPane extends DelayedResizePane/* implements Initializable, EventHandler<ErrorEvent> */{
+public class MainPane extends DelayedResizePane {
     
     @FXML private ChartPane chartPane;
-    
-    public MainPane() {
-        long time = System.nanoTime();
-        boolean contains = DataManager.containsDate(Bank.NBU, Currency.EUR, LocalDate.now());
-        time = System.nanoTime() - time;
-        System.out.println("time = " + time + "; contains: " + contains);
-    
+    @FXML private VBox bankItemBox;
+            
+    public MainPane() {	
+        for(Bank<?> bank : Bank.values()) {
+            BankItem item = new BankItem(bank);
+            item.setOnIntention(e -> {
+                Intention intention = e.getIntention();
+                switch(intention.getAction()) {
+                    case ADD: chartPane.getIntents().add(intention.getIntent()); break;
+                    case REMOVE: chartPane.getIntents().remove(intention.getIntent()); break;
+                }
+            });
+            bankItemBox.getChildren().add(item);
+        }
     }
-    
+
+    public ChartPane getChartPane() {
+        return chartPane;
+    }
 
     @FXML 
-    private void onChartMouseDragged(MouseEvent e) {
-	System.out.println("Mouse dragged: " + e.getX() + " " + e.getY());
+    private void onMouseEntered(MouseEvent e) {
+        /*rotateAnimator.play(0d);
+        opacityAnimator.play(1d);
+        scaleAnimator.playXYZ(1d);
+        translateAnimator.playY(0);*/
     }
     
     @FXML 
-    private void onChartMouseClicked(MouseEvent e) {
-	System.out.println("Mouse clicked: " + e.getButton());
+    private void onMouseExited(MouseEvent e) {
+        /*rotateAnimator.play(180d);
+        opacityAnimator.play(0d);
+        scaleAnimator.playXYZ(0.95d);
+        translateAnimator.playY(-50);*/
     }
 
     /***

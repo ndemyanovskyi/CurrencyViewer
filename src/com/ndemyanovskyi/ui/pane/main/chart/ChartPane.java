@@ -4,13 +4,12 @@ import com.ndemyanovskyi.app.Application;
 import static com.ndemyanovskyi.app.Constants.MINIMAL_PERIOD;
 import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.app.res.Resources;
-import com.ndemyanovskyi.backend.Bank;
-import com.ndemyanovskyi.backend.Currency;
 import com.ndemyanovskyi.backend.Rate;
 import com.ndemyanovskyi.backend.Rate.Field;
 import com.ndemyanovskyi.backend.RateList;
 import com.ndemyanovskyi.backend.Task;
 import com.ndemyanovskyi.collection.FilteredCollection;
+import com.ndemyanovskyi.collection.list.Lists;
 import com.ndemyanovskyi.time.Period;
 import com.ndemyanovskyi.time.Range;
 import com.ndemyanovskyi.ui.anim.OpacityAnimator;
@@ -47,6 +46,7 @@ import javafx.collections.SetChangeListener;
 import javafx.fxml.FXML;
 import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.Parent;
 import javafx.scene.chart.NumberAxis;
@@ -58,14 +58,13 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.ScrollEvent;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.layout.Region;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
 import javafx.scene.shape.Path;
 import javafx.stage.Popup;
-import javafx.stage.PopupWindow;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -77,7 +76,7 @@ public class ChartPane extends InitializableBorderPane {
 
     @FXML private DatePicker fromDatePicker;
     @FXML private DatePicker toDatePicker;
-    @FXML private HBox legendPane;
+    @FXML private FlowPane legendPane;
     
     @FXML private Pane centerPane;
     
@@ -129,12 +128,6 @@ public class ChartPane extends InitializableBorderPane {
         ConvertedBinding.bind(
                 toDatePicker.valueProperty(), xAxis.upperBoundProperty(), 
                 BiConverter.of(Convert::toDate, Convert::toLocalDate));
-          
-        /*Timeline t = new Timeline(new KeyFrame(Duration.seconds(1), e -> {
-            Settings.LANGUAGE.set(Language.values()[(int) (Math.random() * 3)]);
-        }));
-        t.setCycleCount(Animation.INDEFINITE);
-        t.play();*/
         
         initChart();   
         
@@ -157,10 +150,6 @@ public class ChartPane extends InitializableBorderPane {
             }
             return line.getStartX() - description.getWidth() + offset;
         }, line.startXProperty()));
-                
-        for(Currency c : Currency.defaultValues()) {
-            getIntents().add(Bank.SBER_BANK, c);
-        }
     } 
     
     @FXML
@@ -228,7 +217,8 @@ public class ChartPane extends InitializableBorderPane {
                 if(change.wasAdded()) {
                     Intent<?> intent = change.getElementAdded();
                     seriesControllers.put(intent, new SeriesController<>(intent));
-                }else if(change.wasRemoved()) {
+                } 
+		if(change.wasRemoved()) {
                     seriesControllers.remove(
                             change.getElementRemoved()).dispose();
                 }
@@ -247,18 +237,23 @@ public class ChartPane extends InitializableBorderPane {
             private final TranslateAnimator legendAnimator;
 
             private boolean disposed;
+            
+            private boolean enabled = true;
 
             public SeriesController(Intent<R> intent) {
                 this.intent = Objects.requireNonNull(intent, "intent");
-                this.legend = new Legend(intent, e -> dispose());
+                this.legend = new Legend(intent, e -> getIntents().remove(getIntent()));
                 this.series = new Series<>();
                 this.task = new Task();
                 this.item = new Item(intent);
                 
                 description.getData().add(item);
                 legendPane.getChildren().add(legend);
-                
                 legendAnimator = new TranslateAnimator(Duration.millis(200), legend);
+            }
+
+            public boolean isEnabled() {
+                return enabled;
             }
 
             public TranslateAnimator getLegendAnimator() {
@@ -341,9 +336,14 @@ public class ChartPane extends InitializableBorderPane {
                                 });
                             }
                         }
-                    }else {
-                        throw new IllegalStateException(
-                                "Unupported change of RateList: " + change);
+                    } else if(change.wasRemoved()) {
+			List<? extends R> removed = change.getRemoved();
+			for(R rate : removed) {
+			    Date date = Convert.toDate(rate.getDate());
+			    Lists.find(series.getData(), 
+				    d -> d.getXValue().equals(date)).
+				    ifPresent(series.getData()::remove);			
+			}
                     }
                 }
                 updateRange();
@@ -426,16 +426,25 @@ public class ChartPane extends InitializableBorderPane {
                 
                 @Override
                 protected void onError(Cause cause) {
+		    System.out.println("ERROR IN " + this + ": " + cause.getException());
+                    Toast.of(getScene().getWindow(), 
+				    "Error " + cause.getException()).show();
                     switch(cause.getType()) {
                         
                         case ERROR_INTERNET_CONNECTION:
-                            Toast.of(ChartPane.this, "::{error_internet_connection}").show();
+                            Toast.of(getScene().getWindow(), 
+				    "::{error_internet_connection}").show();
                             break;
                             
                         case DATABASE_LOCK_FAIL:
                             task = new Task();
                             break;
                             
+			case DATABASE_ALREADY_LOADED:
+                            Toast.of(getScene().getWindow(), 
+				    "::{error_db_alredy_loaded}").show();
+			    Application.execute(() -> getIntents().remove(getIntent()));
+			    break;
                     }
                 }
 
@@ -464,7 +473,7 @@ public class ChartPane extends InitializableBorderPane {
             for(IntentsManager.SeriesController<?> sc : scs.values()) {
                 OpacityAnimator tempAnimator = sc.getSeriesAnimator();
                 if(sc != entered) {
-                    if(tempAnimator != null) tempAnimator.play(0.1d);
+                    if(tempAnimator != null) tempAnimator.play(0.08d);
                 }
             }
             entered.getLegendAnimator().playY(-5);
@@ -474,11 +483,11 @@ public class ChartPane extends InitializableBorderPane {
     
     @FXML 
     private void onLegendMouseExited(MouseEvent e) {
-        Map<Intent<?>, IntentsManager.SeriesController<?>> scs = intentsManager.seriesControllers;
+        Map<Intent<?>, IntentsManager.SeriesController<?>> scs = intentsManager.getSeriesControllers();
         for(IntentsManager.SeriesController<?> sc : scs.values()) {
             sc.getLegendAnimator().playY(0);
             OpacityAnimator animator = sc.getSeriesAnimator();
-            if(animator != null) animator.play(1.0d);
+            if(animator != null && sc.isEnabled()) animator.play(1.0d);
         }
     }
     
@@ -503,8 +512,6 @@ public class ChartPane extends InitializableBorderPane {
         
         updateDescription();
     }
-    
-    PopupWindow w;
     
     @FXML
     private void onEventedPaneMousePressed(MouseEvent e) {
@@ -550,7 +557,7 @@ public class ChartPane extends InitializableBorderPane {
     private static Toast.Builder toastBuilder(DatePicker picker) {
         return Toast.builder().
                     setOwner(picker).
-                    setAlignment(Toast.Alignment.TOP_CENTER).
+                    setAlignment(Pos.TOP_CENTER).
                     setOffset(0, picker.getHeight());
     }
     

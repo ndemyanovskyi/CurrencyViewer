@@ -1,0 +1,13 @@
+.title-button {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-background-insets: 0;
+}
+.title-button:hover {
+    -fx-background-color: rgba(0, 0, 0, 0.05);
+}
+
+.title-button:pressed {
+    -fx-background-color: rgba(0, 0, 0, 0.1);
+    -fx-background-insets: 0;
+}

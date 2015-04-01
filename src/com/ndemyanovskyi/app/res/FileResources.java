@@ -9,7 +9,8 @@ package com.ndemyanovskyi.app.res;
 import com.ndemyanovskyi.app.localization.Language;
 import com.ndemyanovskyi.collection.set.ArrayListedSet;
 import com.ndemyanovskyi.collection.set.ListedSet;
-import com.ndemyanovskyi.throwable.RuntimeIOException;
+import com.ndemyanovskyi.throwable.Exceptions;
+import com.ndemyanovskyi.util.BiConverter;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
@@ -18,27 +19,61 @@ import java.nio.file.Paths;
 import java.util.Map.Entry;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Predicate;
 
 
 public abstract class FileResources<T> extends Resources<T> {
     
-    private ListedSet<Entry<String, T>> data;
+    private static final Predicate<String> DEFAULT_PREDICATE = key -> true;
     
-    FileResources(Language language, String folder) {
+    private static final BiConverter<String, String> DEFAULT_KEY_CONVERTER = 
+            BiConverter.of(key -> key, key -> key);
+    
+    private ListedSet<Entry<String, T>> data;
+    private final Predicate<? super String> predicate;
+    private final BiConverter<String, String> keyConverter;  
+
+    public FileResources(Language language, String folder, Predicate<? super String> predicate) {
+        this(language, folder, predicate, DEFAULT_KEY_CONVERTER);
+    }   
+
+    public FileResources(Language language, String folder, BiConverter<String, String> keyConverter) {
+        this(language, folder, DEFAULT_PREDICATE, keyConverter);
+    }  
+
+    public FileResources(Language language, String folder) {
+        this(language, folder, DEFAULT_PREDICATE, DEFAULT_KEY_CONVERTER);
+    }   
+    
+    FileResources(Language language, String folder, Predicate<? super String> predicate, BiConverter<String, String> keyConverter) {
 	super(language, Paths.get("res", "files", 
 		Objects.requireNonNull(folder, "folder"), language.tag().toLowerCase()));
-	if(Files.exists(getPath())) {
+        
+        this.predicate = Objects.requireNonNull(predicate, "predicate");
+        this.keyConverter = Objects.requireNonNull(keyConverter, "keyConverter");
+	
+        if(Files.exists(getPath())) {
 	    for(String name : getPath().toFile().list()) {
-		data().add(new FileEntry(name));
+                if(predicate.test(name)) {
+                    getData().add(new FileEntry(name));
+                }
 	    }
 	}
+    }
+    
+    public Predicate<? super String> getPredicate() {
+        return predicate;
+    }    
+
+    public BiConverter<String, String> getKeyConverter() {
+        return keyConverter;
     }
 
     @Override
     protected Set<Entry<String, T>> defaultEntrySet() {
 	return getDefaultResources() != this 
-		? getDefaultResources().data() 
-		: data();
+		? getDefaultResources().getData() 
+		: getData();
     }
 
     @Override
@@ -47,7 +82,11 @@ public abstract class FileResources<T> extends Resources<T> {
 	return findEntry((String) keyObject) != null;
     }
     
-    protected abstract T read(File file) throws IOException;
+    protected abstract T readFile(File file) throws IOException;
+    
+    protected String convertKey(String key) {
+        return key;
+    }
 
     @Override
     protected Entry<String, T> getEntry(String key) {
@@ -102,17 +141,17 @@ public abstract class FileResources<T> extends Resources<T> {
 	}
     }*/
 
-    private ListedSet<Entry<String, T>> data() {
+    private ListedSet<Entry<String, T>> getData() {
 	return data != null ? data : (data = new ArrayListedSet<>());
     }
    
-    private class FileEntry implements Entry<String, T> {
+    class FileEntry implements Entry<String, T> {
 	
 	private final String key;
 	private SoftReference<T> value;
 
 	public FileEntry(String key) {
-	    this.key = key;
+	    this.key = getKeyConverter().to(key);
 	}
 
 	@Override
@@ -124,18 +163,19 @@ public abstract class FileResources<T> extends Resources<T> {
 	public T getValue() {
 	    T resource = (value != null) ? value.get() : null;
 	    if(resource == null) {
-		try {
-		    resource = read(Paths.get(getPath().toString(), key).toFile());
-		} catch(IOException ex) {
-		    throw new RuntimeIOException(ex);
-		}
+		resource = initValue();
 		value = new SoftReference<>(resource);
 	    }
 	    return resource;
 	}
+        
+        protected T initValue() {
+            return Exceptions.execute(() -> 
+                    readFile(Paths.get(getPath().toString(), getKeyConverter().from(key)).toFile()));
+        }
 
 	@Override
-	public T setValue(T value) {
+	public final T setValue(T value) {
 	    throw new UnsupportedOperationException("setValue");
 	}
 

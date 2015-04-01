@@ -7,24 +7,23 @@
 package com.ndemyanovskyi.ui.pane;
 
 import com.ndemyanovskyi.app.Application;
-import com.ndemyanovskyi.app.localization.binding.ResourceBindings;
 import com.ndemyanovskyi.reflection.Reflection;
 import com.ndemyanovskyi.throwable.Exceptions;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.GridPane;
 
 
-public class InitializableVBox extends VBox implements Initializable {
+public class InitializableGridPane extends GridPane implements Initializable {
     
-    protected InitializableVBox() {
+    public InitializableGridPane() {
 	Class<?> caller = Reflection.getCallerClass();
 	init(caller.getResource(caller.getSimpleName() + ".fxml"));
     }
     
-    public InitializableVBox(String parent) {
+    public InitializableGridPane(String parent) {
 	init(Reflection.getCallerClass().getResource(parent));
     }
     
@@ -33,7 +32,6 @@ public class InitializableVBox extends VBox implements Initializable {
 	loader.setRoot(this);
 	loader.setController(this);
 	Exceptions.execute(() -> loader.load());
-        ResourceBindings.register(this);
     }
     
     public Application getApplication() {
